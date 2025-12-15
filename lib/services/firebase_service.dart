@@ -1,7 +1,8 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
-import '../models/user.dart'; // Relative import
-import '../models/job.dart'; // Relative import
-import '../models/service.dart'; // Phase 4: Service model
+import '../models/user.dart';
+import '../models/job.dart';
+import '../models/service.dart';
+import '../models/rental.dart';
 
 class FirebaseService {
   final FirebaseFirestore _db = FirebaseFirestore.instance;
@@ -30,22 +31,15 @@ class FirebaseService {
 
   // --- JOB METHODS ---
 
-  // Create a new Job
   Future<void> createJob(JobModel job) async {
     try {
-      // Create a reference for a new document with an auto-generated ID
       DocumentReference docRef = _db.collection('barangay_jobs').doc();
-
-      // We can update the job object to include this new ID if we want,
-      // but typically we just save the data.
-      // Firestore will hold the ID in the document metadata.
       await docRef.set(job.toMap());
     } catch (e) {
       throw Exception('Error creating job: $e');
     }
   }
 
-  // Stream all jobs (optionally filtered by barangay)
   Stream<List<JobModel>> getJobsStream(String? barangayFilter) {
     Query query = _db
         .collection('barangay_jobs')
@@ -57,7 +51,6 @@ class FirebaseService {
 
     return query.snapshots().map((snapshot) {
       return snapshot.docs.map((doc) {
-        // Safe cast to Map<String, dynamic>
         return JobModel.fromMap(doc.data() as Map<String, dynamic>, doc.id);
       }).toList();
     });
@@ -79,7 +72,6 @@ class FirebaseService {
     }
   }
 
-  // Apply to a job: Adds applicant to Job AND Creates Transaction Record
   Future<void> applyToJob(
     String jobId,
     String jobTitle,
@@ -91,7 +83,6 @@ class FirebaseService {
     WriteBatch batch = _db.batch();
 
     try {
-      // 1. Add applicant to the Job document
       DocumentReference jobRef = _db.collection('barangay_jobs').doc(jobId);
 
       Applicant newApplicant = Applicant(
@@ -104,37 +95,31 @@ class FirebaseService {
         'applicants': FieldValue.arrayUnion([newApplicant.toMap()]),
       });
 
-      // 2. Create a Transaction Record (Phase 3 requirement)
-      // Note: This collection is created automatically if it doesn't exist.
-      DocumentReference transRef = _db
-          .collection('barangay_transactions')
-          .doc();
+      DocumentReference transRef = _db.collection('barangay_transactions').doc();
 
       Map<String, dynamic> transactionData = {
         'type': 'job_application',
         'relatedId': jobId,
-        'relatedName': jobTitle, // Snapshot of title
+        'relatedName': jobTitle,
         'initiatedBy': applicantId,
         'targetUser': posterId,
         'status': 'Pending',
         'barangay': barangay,
         'paymentStatus': 'Unpaid',
-        'transactionAmount': 0, // Placeholder
+        'transactionAmount': 0,
         'createdAt': Timestamp.now(),
         'updatedAt': Timestamp.now(),
       };
 
       batch.set(transRef, transactionData);
-
       await batch.commit();
     } catch (e) {
       throw Exception('Error applying to job: $e');
     }
   }
 
-  // --- SERVICE METHODS (Phase 4) ---
+  // --- SERVICE METHODS ---
 
-  // Create a new Service
   Future<void> createService(ServiceModel service) async {
     try {
       DocumentReference docRef = _db.collection('barangay_services').doc();
@@ -144,7 +129,6 @@ class FirebaseService {
     }
   }
 
-  // Stream all services (optionally filtered by barangay)
   Stream<List<ServiceModel>> getServicesStream(String? barangayFilter) {
     Query query = _db
         .collection('barangay_services')
@@ -177,7 +161,6 @@ class FirebaseService {
     }
   }
 
-  // Book a service: Creates Transaction Record
   Future<void> bookService({
     required String serviceId,
     required String serviceName,
@@ -210,5 +193,80 @@ class FirebaseService {
       throw Exception('Error booking service: $e');
     }
   }
-}
 
+  // --- RENTAL METHODS ---
+
+  Future<void> createRental(RentalModel rental) async {
+    try {
+      DocumentReference docRef = _db.collection('barangay_rentals').doc();
+      await docRef.set(rental.toMap());
+    } catch (e) {
+      throw Exception('Error creating rental: $e');
+    }
+  }
+
+  Stream<List<RentalModel>> getRentalsStream(String? barangayFilter) {
+    Query query = _db
+        .collection('barangay_rentals')
+        .orderBy('createdAt', descending: true);
+
+    if (barangayFilter != null && barangayFilter != 'All Tagum City') {
+      query = query.where('barangay', isEqualTo: barangayFilter);
+    }
+
+    return query.snapshots().map((snapshot) {
+      return snapshot.docs.map((doc) {
+        return RentalModel.fromMap(doc.data() as Map<String, dynamic>, doc.id);
+      }).toList();
+    });
+  }
+
+  Future<void> updateRental(String rentalId, Map<String, dynamic> data) async {
+    try {
+      await _db.collection('barangay_rentals').doc(rentalId).update(data);
+    } catch (e) {
+      throw Exception('Error updating rental: $e');
+    }
+  }
+
+  Future<void> deleteRental(String rentalId) async {
+    try {
+      await _db.collection('barangay_rentals').doc(rentalId).delete();
+    } catch (e) {
+      throw Exception('Error deleting rental: $e');
+    }
+  }
+
+  Future<void> requestRental({
+    required String rentalId,
+    required String itemName,
+    required String ownerId,
+    required String renterId,
+    required String renterName,
+    required String barangay,
+    required double rentPrice,
+  }) async {
+    try {
+      DocumentReference transRef = _db.collection('barangay_transactions').doc();
+
+      Map<String, dynamic> transactionData = {
+        'type': 'rental_request',
+        'relatedId': rentalId,
+        'relatedName': itemName,
+        'initiatedBy': renterId,
+        'initiatedByName': renterName,
+        'targetUser': ownerId,
+        'status': 'Pending',
+        'barangay': barangay,
+        'paymentStatus': 'Unpaid',
+        'transactionAmount': rentPrice,
+        'createdAt': Timestamp.now(),
+        'updatedAt': Timestamp.now(),
+      };
+
+      await transRef.set(transactionData);
+    } catch (e) {
+      throw Exception('Error requesting rental: $e');
+    }
+  }
+}
