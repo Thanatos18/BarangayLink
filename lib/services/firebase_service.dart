@@ -1,6 +1,7 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import '../models/user.dart'; // Relative import
 import '../models/job.dart'; // Relative import
+import '../models/service.dart'; // Phase 4: Service model
 
 class FirebaseService {
   final FirebaseFirestore _db = FirebaseFirestore.instance;
@@ -130,4 +131,84 @@ class FirebaseService {
       throw Exception('Error applying to job: $e');
     }
   }
+
+  // --- SERVICE METHODS (Phase 4) ---
+
+  // Create a new Service
+  Future<void> createService(ServiceModel service) async {
+    try {
+      DocumentReference docRef = _db.collection('barangay_services').doc();
+      await docRef.set(service.toMap());
+    } catch (e) {
+      throw Exception('Error creating service: $e');
+    }
+  }
+
+  // Stream all services (optionally filtered by barangay)
+  Stream<List<ServiceModel>> getServicesStream(String? barangayFilter) {
+    Query query = _db
+        .collection('barangay_services')
+        .orderBy('createdAt', descending: true);
+
+    if (barangayFilter != null && barangayFilter != 'All Tagum City') {
+      query = query.where('barangay', isEqualTo: barangayFilter);
+    }
+
+    return query.snapshots().map((snapshot) {
+      return snapshot.docs.map((doc) {
+        return ServiceModel.fromMap(doc.data() as Map<String, dynamic>, doc.id);
+      }).toList();
+    });
+  }
+
+  Future<void> updateService(String serviceId, Map<String, dynamic> data) async {
+    try {
+      await _db.collection('barangay_services').doc(serviceId).update(data);
+    } catch (e) {
+      throw Exception('Error updating service: $e');
+    }
+  }
+
+  Future<void> deleteService(String serviceId) async {
+    try {
+      await _db.collection('barangay_services').doc(serviceId).delete();
+    } catch (e) {
+      throw Exception('Error deleting service: $e');
+    }
+  }
+
+  // Book a service: Creates Transaction Record
+  Future<void> bookService({
+    required String serviceId,
+    required String serviceName,
+    required String providerId,
+    required String clientId,
+    required String clientName,
+    required String barangay,
+    required double rate,
+  }) async {
+    try {
+      DocumentReference transRef = _db.collection('barangay_transactions').doc();
+
+      Map<String, dynamic> transactionData = {
+        'type': 'service_booking',
+        'relatedId': serviceId,
+        'relatedName': serviceName,
+        'initiatedBy': clientId,
+        'initiatedByName': clientName,
+        'targetUser': providerId,
+        'status': 'Pending',
+        'barangay': barangay,
+        'paymentStatus': 'Unpaid',
+        'transactionAmount': rate,
+        'createdAt': Timestamp.now(),
+        'updatedAt': Timestamp.now(),
+      };
+
+      await transRef.set(transactionData);
+    } catch (e) {
+      throw Exception('Error booking service: $e');
+    }
+  }
 }
+
