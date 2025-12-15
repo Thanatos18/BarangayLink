@@ -1,31 +1,25 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
-import 'package:flutter_application_1/models/user.dart';
+import '../models/user.dart'; // Relative import
+import '../models/job.dart'; // Relative import
 
 class FirebaseService {
   final FirebaseFirestore _db = FirebaseFirestore.instance;
 
-  // Create a new user document in 'barangay_users' collection
+  // --- USER METHODS ---
+
   Future<void> createUserDocument(UserModel user) async {
     try {
-      // Using set() with merge: true is safer in case the document partially exists
-      await _db
-          .collection('barangay_users')
-          .doc(user.uid)
-          .set(user.toMap(), SetOptions(merge: true));
+      await _db.collection('barangay_users').doc(user.uid).set(user.toMap());
     } catch (e) {
-      // It is good practice to log the error or rethrow a more specific error
       throw Exception('Error creating user document: $e');
     }
   }
 
-  // Get a user document from Firestore
   Future<UserModel?> getUserDocument(String uid) async {
     try {
       final docSnap = await _db.collection('barangay_users').doc(uid).get();
-
-      if (docSnap.exists && docSnap.data() != null) {
-        // Safely convert the data map to a UserModel
-        return UserModel.fromMap(docSnap.data() as Map<String, dynamic>, uid);
+      if (docSnap.exists) {
+        return UserModel.fromMap(docSnap.data()!, uid);
       }
       return null;
     } catch (e) {
@@ -33,12 +27,107 @@ class FirebaseService {
     }
   }
 
-  // Update a user document
-  Future<void> updateUserDocument(String uid, Map<String, dynamic> data) async {
+  // --- JOB METHODS ---
+
+  // Create a new Job
+  Future<void> createJob(JobModel job) async {
     try {
-      await _db.collection('barangay_users').doc(uid).update(data);
+      // Create a reference for a new document with an auto-generated ID
+      DocumentReference docRef = _db.collection('barangay_jobs').doc();
+
+      // We can update the job object to include this new ID if we want,
+      // but typically we just save the data.
+      // Firestore will hold the ID in the document metadata.
+      await docRef.set(job.toMap());
     } catch (e) {
-      throw Exception('Error updating user document: $e');
+      throw Exception('Error creating job: $e');
+    }
+  }
+
+  // Stream all jobs (optionally filtered by barangay)
+  Stream<List<JobModel>> getJobsStream(String? barangayFilter) {
+    Query query = _db
+        .collection('barangay_jobs')
+        .orderBy('createdAt', descending: true);
+
+    if (barangayFilter != null && barangayFilter != 'All Tagum City') {
+      query = query.where('barangay', isEqualTo: barangayFilter);
+    }
+
+    return query.snapshots().map((snapshot) {
+      return snapshot.docs.map((doc) {
+        // Safe cast to Map<String, dynamic>
+        return JobModel.fromMap(doc.data() as Map<String, dynamic>, doc.id);
+      }).toList();
+    });
+  }
+
+  Future<void> updateJob(String jobId, Map<String, dynamic> data) async {
+    try {
+      await _db.collection('barangay_jobs').doc(jobId).update(data);
+    } catch (e) {
+      throw Exception('Error updating job: $e');
+    }
+  }
+
+  Future<void> deleteJob(String jobId) async {
+    try {
+      await _db.collection('barangay_jobs').doc(jobId).delete();
+    } catch (e) {
+      throw Exception('Error deleting job: $e');
+    }
+  }
+
+  // Apply to a job: Adds applicant to Job AND Creates Transaction Record
+  Future<void> applyToJob(
+    String jobId,
+    String jobTitle,
+    String posterId,
+    String applicantId,
+    String applicantName,
+    String barangay,
+  ) async {
+    WriteBatch batch = _db.batch();
+
+    try {
+      // 1. Add applicant to the Job document
+      DocumentReference jobRef = _db.collection('barangay_jobs').doc(jobId);
+
+      Applicant newApplicant = Applicant(
+        userId: applicantId,
+        userName: applicantName,
+        appliedAt: DateTime.now(),
+      );
+
+      batch.update(jobRef, {
+        'applicants': FieldValue.arrayUnion([newApplicant.toMap()]),
+      });
+
+      // 2. Create a Transaction Record (Phase 3 requirement)
+      // Note: This collection is created automatically if it doesn't exist.
+      DocumentReference transRef = _db
+          .collection('barangay_transactions')
+          .doc();
+
+      Map<String, dynamic> transactionData = {
+        'type': 'job_application',
+        'relatedId': jobId,
+        'relatedName': jobTitle, // Snapshot of title
+        'initiatedBy': applicantId,
+        'targetUser': posterId,
+        'status': 'Pending',
+        'barangay': barangay,
+        'paymentStatus': 'Unpaid',
+        'transactionAmount': 0, // Placeholder
+        'createdAt': Timestamp.now(),
+        'updatedAt': Timestamp.now(),
+      };
+
+      batch.set(transRef, transactionData);
+
+      await batch.commit();
+    } catch (e) {
+      throw Exception('Error applying to job: $e');
     }
   }
 }

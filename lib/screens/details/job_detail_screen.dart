@@ -1,0 +1,619 @@
+import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
+import '../../constants/app_constants.dart';
+import '../../models/job.dart';
+import '../../providers/jobs_provider.dart';
+import '../../providers/user_provider.dart';
+import '../create/edit_job_screen.dart';
+
+class JobDetailScreen extends StatelessWidget {
+  final JobModel job;
+
+  const JobDetailScreen({super.key, required this.job});
+
+  @override
+  Widget build(BuildContext context) {
+    final userProvider = context.watch<UserProvider>();
+    final currentUser = userProvider.currentUser;
+    final isOwner = currentUser?.uid == job.postedBy;
+    final isAdmin = currentUser?.isAdmin ?? false;
+    final canModify = isOwner || isAdmin;
+
+    // Check if current user has already applied
+    final hasApplied = currentUser != null
+        ? context.read<JobsProvider>().hasUserApplied(job, currentUser.uid)
+        : false;
+
+    return Scaffold(
+      appBar: AppBar(
+        title: const Text('Job Details'),
+        backgroundColor: kPrimaryColor,
+        foregroundColor: Colors.white,
+        actions: canModify
+            ? [
+                PopupMenuButton<String>(
+                  onSelected: (value) => _handleMenuAction(context, value),
+                  itemBuilder: (context) => [
+                    const PopupMenuItem(
+                      value: 'edit',
+                      child: Row(
+                        children: [
+                          Icon(Icons.edit, color: Colors.blue),
+                          SizedBox(width: 8),
+                          Text('Edit Job'),
+                        ],
+                      ),
+                    ),
+                    const PopupMenuItem(
+                      value: 'delete',
+                      child: Row(
+                        children: [
+                          Icon(Icons.delete, color: Colors.red),
+                          SizedBox(width: 8),
+                          Text('Delete Job'),
+                        ],
+                      ),
+                    ),
+                  ],
+                ),
+              ]
+            : null,
+      ),
+      body: SingleChildScrollView(
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            // Header section
+            _buildHeader(),
+            const Divider(),
+            // Details section
+            _buildDetailsSection(),
+            const Divider(),
+            // Description section
+            _buildDescriptionSection(),
+            // Applicants section (only for owner)
+            if (isOwner) ...[
+              const Divider(),
+              _buildApplicantsSection(context),
+            ],
+          ],
+        ),
+      ),
+      bottomNavigationBar: _buildBottomBar(context, currentUser, hasApplied, isOwner),
+    );
+  }
+
+  Widget _buildHeader() {
+    return Container(
+      padding: const EdgeInsets.all(20),
+      color: kPrimaryColor.withValues(alpha: 0.1),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          // Status badge
+          _buildStatusBadge(job.status),
+          const SizedBox(height: 12),
+          // Title
+          Text(
+            job.title,
+            style: const TextStyle(
+              fontSize: 24,
+              fontWeight: FontWeight.bold,
+            ),
+          ),
+          const SizedBox(height: 8),
+          // Category chip
+          Chip(
+            label: Text(job.category),
+            backgroundColor: kAccentColor.withValues(alpha: 0.3),
+          ),
+          const SizedBox(height: 12),
+          // Wage highlight
+          Container(
+            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+            decoration: BoxDecoration(
+              color: kPrimaryColor.withValues(alpha: 0.2),
+              borderRadius: BorderRadius.circular(12),
+              border: Border.all(color: kPrimaryColor),
+            ),
+            child: Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                const Icon(Icons.payments, color: kPrimaryColor, size: 28),
+                const SizedBox(width: 8),
+                Text(
+                  '₱${job.wage.toStringAsFixed(0)}',
+                  style: const TextStyle(
+                    fontSize: 28,
+                    fontWeight: FontWeight.bold,
+                    color: kPrimaryColor,
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildStatusBadge(String status) {
+    Color bgColor;
+    Color textColor;
+    IconData icon;
+
+    switch (status) {
+      case 'Open':
+        bgColor = Colors.green.shade100;
+        textColor = Colors.green.shade700;
+        icon = Icons.check_circle_outline;
+        break;
+      case 'In Progress':
+        bgColor = Colors.orange.shade100;
+        textColor = Colors.orange.shade700;
+        icon = Icons.pending;
+        break;
+      case 'Completed':
+        bgColor = Colors.grey.shade200;
+        textColor = Colors.grey.shade700;
+        icon = Icons.done_all;
+        break;
+      default:
+        bgColor = Colors.grey.shade100;
+        textColor = Colors.grey.shade700;
+        icon = Icons.help_outline;
+    }
+
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+      decoration: BoxDecoration(
+        color: bgColor,
+        borderRadius: BorderRadius.circular(20),
+      ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Icon(icon, color: textColor, size: 18),
+          const SizedBox(width: 4),
+          Text(
+            status,
+            style: TextStyle(
+              color: textColor,
+              fontWeight: FontWeight.w600,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildDetailsSection() {
+    return Padding(
+      padding: const EdgeInsets.all(20),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          const Text(
+            'Job Details',
+            style: TextStyle(
+              fontSize: 18,
+              fontWeight: FontWeight.bold,
+            ),
+          ),
+          const SizedBox(height: 16),
+          // Location / Barangay
+          _buildDetailRow(
+            icon: Icons.location_on,
+            label: 'Barangay',
+            value: job.barangay,
+          ),
+          // Specific location (if provided)
+          if (job.location.isNotEmpty)
+            _buildDetailRow(
+              icon: Icons.place,
+              label: 'Location',
+              value: job.location,
+            ),
+          // Posted by
+          _buildDetailRow(
+            icon: Icons.person,
+            label: 'Posted by',
+            value: job.posterName,
+          ),
+          // Posted date
+          _buildDetailRow(
+            icon: Icons.calendar_today,
+            label: 'Posted on',
+            value: _formatFullDate(job.createdAt),
+          ),
+          // Applicants count
+          _buildDetailRow(
+            icon: Icons.people,
+            label: 'Applicants',
+            value: '${job.applicants.length} applicant${job.applicants.length != 1 ? 's' : ''}',
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildDetailRow({
+    required IconData icon,
+    required String label,
+    required String value,
+  }) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 8),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Icon(icon, size: 20, color: Colors.grey.shade600),
+          const SizedBox(width: 12),
+          Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                label,
+                style: TextStyle(
+                  fontSize: 12,
+                  color: Colors.grey.shade600,
+                ),
+              ),
+              Text(
+                value,
+                style: const TextStyle(
+                  fontSize: 16,
+                  fontWeight: FontWeight.w500,
+                ),
+              ),
+            ],
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildDescriptionSection() {
+    return Padding(
+      padding: const EdgeInsets.all(20),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          const Text(
+            'Description',
+            style: TextStyle(
+              fontSize: 18,
+              fontWeight: FontWeight.bold,
+            ),
+          ),
+          const SizedBox(height: 12),
+          Text(
+            job.description,
+            style: TextStyle(
+              fontSize: 16,
+              color: Colors.grey.shade700,
+              height: 1.5,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildApplicantsSection(BuildContext context) {
+    return Padding(
+      padding: const EdgeInsets.all(20),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              const Text(
+                'Applicants',
+                style: TextStyle(
+                  fontSize: 18,
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
+              const Spacer(),
+              Container(
+                padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
+                decoration: BoxDecoration(
+                  color: kPrimaryColor,
+                  borderRadius: BorderRadius.circular(12),
+                ),
+                child: Text(
+                  '${job.applicants.length}',
+                  style: const TextStyle(
+                    color: Colors.white,
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 12),
+          if (job.applicants.isEmpty)
+            Container(
+              padding: const EdgeInsets.all(24),
+              decoration: BoxDecoration(
+                color: Colors.grey.shade100,
+                borderRadius: BorderRadius.circular(12),
+              ),
+              child: Center(
+                child: Column(
+                  children: [
+                    Icon(Icons.people_outline, size: 48, color: Colors.grey.shade400),
+                    const SizedBox(height: 8),
+                    Text(
+                      'No applicants yet',
+                      style: TextStyle(color: Colors.grey.shade600),
+                    ),
+                  ],
+                ),
+              ),
+            )
+          else
+            ListView.separated(
+              shrinkWrap: true,
+              physics: const NeverScrollableScrollPhysics(),
+              itemCount: job.applicants.length,
+              separatorBuilder: (_, __) => const Divider(),
+              itemBuilder: (context, index) {
+                final applicant = job.applicants[index];
+                return ListTile(
+                  leading: CircleAvatar(
+                    backgroundColor: kPrimaryColor.withValues(alpha: 0.2),
+                    child: Text(
+                      applicant.userName.isNotEmpty
+                          ? applicant.userName[0].toUpperCase()
+                          : '?',
+                      style: const TextStyle(
+                        color: kPrimaryColor,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                  ),
+                  title: Text(applicant.userName),
+                  subtitle: Text(
+                    'Applied ${_formatRelativeDate(applicant.appliedAt)}',
+                    style: TextStyle(color: Colors.grey.shade600),
+                  ),
+                  trailing: IconButton(
+                    icon: const Icon(Icons.message_outlined),
+                    color: kPrimaryColor,
+                    onPressed: () {
+                      // TODO: Navigate to chat/contact screen
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        const SnackBar(content: Text('Contact feature coming soon!')),
+                      );
+                    },
+                  ),
+                );
+              },
+            ),
+        ],
+      ),
+    );
+  }
+
+  Widget? _buildBottomBar(
+    BuildContext context,
+    dynamic currentUser,
+    bool hasApplied,
+    bool isOwner,
+  ) {
+    // Don't show apply button for owner or if job is not open
+    if (isOwner || job.status != 'Open') {
+      return null;
+    }
+
+    return Container(
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        boxShadow: [
+          BoxShadow(
+            color: Colors.grey.shade300,
+            blurRadius: 10,
+            offset: const Offset(0, -2),
+          ),
+        ],
+      ),
+      child: SafeArea(
+        child: hasApplied
+            ? Container(
+                padding: const EdgeInsets.symmetric(vertical: 16),
+                decoration: BoxDecoration(
+                  color: Colors.grey.shade200,
+                  borderRadius: BorderRadius.circular(12),
+                ),
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    Icon(Icons.check_circle, color: Colors.grey.shade600),
+                    const SizedBox(width: 8),
+                    Text(
+                      'You have applied',
+                      style: TextStyle(
+                        color: Colors.grey.shade600,
+                        fontWeight: FontWeight.w500,
+                        fontSize: 16,
+                      ),
+                    ),
+                  ],
+                ),
+              )
+            : ElevatedButton(
+                onPressed: currentUser != null
+                    ? () => _applyToJob(context, currentUser)
+                    : () {
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          const SnackBar(content: Text('Please log in to apply')),
+                        );
+                      },
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: kPrimaryColor,
+                  foregroundColor: Colors.white,
+                  padding: const EdgeInsets.symmetric(vertical: 16),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                ),
+                child: const Row(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    Icon(Icons.send),
+                    SizedBox(width: 8),
+                    Text(
+                      'Apply Now',
+                      style: TextStyle(
+                        fontSize: 18,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+      ),
+    );
+  }
+
+  void _handleMenuAction(BuildContext context, String action) {
+    switch (action) {
+      case 'edit':
+        Navigator.push(
+          context,
+          MaterialPageRoute(
+            builder: (context) => EditJobScreen(job: job),
+          ),
+        );
+        break;
+      case 'delete':
+        _showDeleteConfirmation(context);
+        break;
+    }
+  }
+
+  void _showDeleteConfirmation(BuildContext context) {
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text('Delete Job'),
+        content: const Text(
+          'Are you sure you want to delete this job? This action cannot be undone.',
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: const Text('Cancel'),
+          ),
+          ElevatedButton(
+            onPressed: () async {
+              Navigator.pop(context); // Close dialog
+              try {
+                await context.read<JobsProvider>().deleteJob(job.id);
+                if (context.mounted) {
+                  Navigator.pop(context); // Return to jobs list
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    const SnackBar(content: Text('Job deleted successfully')),
+                  );
+                }
+              } catch (e) {
+                if (context.mounted) {
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    SnackBar(content: Text('Error deleting job: $e')),
+                  );
+                }
+              }
+            },
+            style: ElevatedButton.styleFrom(
+              backgroundColor: Colors.red,
+              foregroundColor: Colors.white,
+            ),
+            child: const Text('Delete'),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Future<void> _applyToJob(BuildContext context, dynamic currentUser) async {
+    // Show confirmation dialog
+    final confirm = await showDialog<bool>(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text('Apply for Job'),
+        content: Text(
+          'Are you sure you want to apply for "${job.title}"?\n\nThe job poster will see your name and be able to contact you.',
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context, false),
+            child: const Text('Cancel'),
+          ),
+          ElevatedButton(
+            onPressed: () => Navigator.pop(context, true),
+            child: const Text('Apply'),
+          ),
+        ],
+      ),
+    );
+
+    if (confirm != true) return;
+
+    try {
+      await context.read<JobsProvider>().applyToJob(
+            jobId: job.id,
+            jobTitle: job.title,
+            posterId: job.postedBy,
+            applicantId: currentUser.uid,
+            applicantName: currentUser.name,
+            barangay: job.barangay,
+          );
+
+      if (context.mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('Application sent successfully!'),
+            backgroundColor: kPrimaryColor,
+          ),
+        );
+        // Return to jobs list
+        Navigator.pop(context);
+      }
+    } catch (e) {
+      if (context.mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Error applying: $e')),
+        );
+      }
+    }
+  }
+
+  String _formatFullDate(DateTime date) {
+    final months = [
+      'January', 'February', 'March', 'April', 'May', 'June',
+      'July', 'August', 'September', 'October', 'November', 'December'
+    ];
+    return '${months[date.month - 1]} ${date.day}, ${date.year}';
+  }
+
+  String _formatRelativeDate(DateTime date) {
+    final now = DateTime.now();
+    final diff = now.difference(date);
+
+    if (diff.inDays == 0) {
+      if (diff.inHours == 0) {
+        return '${diff.inMinutes} minutes ago';
+      }
+      return '${diff.inHours} hours ago';
+    } else if (diff.inDays == 1) {
+      return 'yesterday';
+    } else if (diff.inDays < 7) {
+      return '${diff.inDays} days ago';
+    } else {
+      return _formatFullDate(date);
+    }
+  }
+}
