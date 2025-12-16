@@ -4,6 +4,7 @@ import '../../constants/app_constants.dart'; // Relative import
 import '../../providers/user_provider.dart'; // Relative import
 import '../../widgets/custom_app_bar.dart'; // Relative import
 import '../auth/login_screen.dart'; // Relative import
+import '../transaction/transaction_history_screen.dart'; // Phase 6: Transaction History
 
 class ProfileScreen extends StatelessWidget {
   const ProfileScreen({super.key});
@@ -104,7 +105,12 @@ class ProfileScreen extends StatelessWidget {
               title: const Text('Transaction History'),
               trailing: const Icon(Icons.chevron_right),
               onTap: () {
-                // Navigate to history
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                    builder: (context) => const TransactionHistoryScreen(),
+                  ),
+                );
               },
             ),
             ListTile(

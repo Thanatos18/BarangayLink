@@ -3,6 +3,7 @@ import '../models/user.dart';
 import '../models/job.dart';
 import '../models/service.dart';
 import '../models/rental.dart';
+import '../models/transaction.dart';
 
 class FirebaseService {
   final FirebaseFirestore _db = FirebaseFirestore.instance;
@@ -267,6 +268,109 @@ class FirebaseService {
       await transRef.set(transactionData);
     } catch (e) {
       throw Exception('Error requesting rental: $e');
+    }
+  }
+
+  // --- TRANSACTION METHODS ---
+
+  /// Fetch a single transaction by ID
+  Future<TransactionModel?> getTransaction(String transactionId) async {
+    try {
+      final docSnap = await _db.collection('barangay_transactions').doc(transactionId).get();
+      if (docSnap.exists) {
+        return TransactionModel.fromMap(docSnap.data()!, docSnap.id);
+      }
+      return null;
+    } catch (e) {
+      throw Exception('Error getting transaction: $e');
+    }
+  }
+
+  /// Stream all transactions where the user is either initiator or target.
+  /// This merges two queries into a single stream.
+  Stream<List<TransactionModel>> getUserTransactionsStream(String userId) {
+    // Query for transactions initiated by user
+    final initiatedQuery = _db
+        .collection('barangay_transactions')
+        .where('initiatedBy', isEqualTo: userId)
+        .orderBy('createdAt', descending: true)
+        .snapshots();
+
+    // Query for transactions targeting user
+    final targetQuery = _db
+        .collection('barangay_transactions')
+        .where('targetUser', isEqualTo: userId)
+        .orderBy('createdAt', descending: true)
+        .snapshots();
+
+    // Combine both streams
+    return initiatedQuery.asyncMap((initiatedSnapshot) async {
+      final targetSnapshot = await targetQuery.first;
+
+      // Collect all transactions, using a Set to avoid duplicates
+      final Map<String, TransactionModel> transactionsMap = {};
+
+      for (var doc in initiatedSnapshot.docs) {
+        transactionsMap[doc.id] = TransactionModel.fromMap(doc.data(), doc.id);
+      }
+
+      for (var doc in targetSnapshot.docs) {
+        transactionsMap[doc.id] = TransactionModel.fromMap(doc.data(), doc.id);
+      }
+
+      // Sort by createdAt descending
+      final transactions = transactionsMap.values.toList();
+      transactions.sort((a, b) => b.createdAt.compareTo(a.createdAt));
+
+      return transactions;
+    });
+  }
+
+  /// Update transaction status (Pending, Accepted, In Progress, Completed, Cancelled)
+  Future<void> updateTransactionStatus(String transactionId, String newStatus) async {
+    try {
+      await _db.collection('barangay_transactions').doc(transactionId).update({
+        'status': newStatus,
+        'updatedAt': Timestamp.now(),
+      });
+    } catch (e) {
+      throw Exception('Error updating transaction status: $e');
+    }
+  }
+
+  /// Confirm payment - sets paymentStatus to "Paid" and status to "In Progress"
+  Future<void> confirmPayment(String transactionId) async {
+    try {
+      await _db.collection('barangay_transactions').doc(transactionId).update({
+        'paymentStatus': 'Paid',
+        'status': 'In Progress',
+        'updatedAt': Timestamp.now(),
+      });
+    } catch (e) {
+      throw Exception('Error confirming payment: $e');
+    }
+  }
+
+  /// Complete transaction - sets status to "Completed" and adds completedAt timestamp
+  Future<void> completeTransaction(String transactionId) async {
+    try {
+      await _db.collection('barangay_transactions').doc(transactionId).update({
+        'status': 'Completed',
+        'completedAt': Timestamp.now(),
+        'updatedAt': Timestamp.now(),
+      });
+    } catch (e) {
+      throw Exception('Error completing transaction: $e');
+    }
+  }
+
+  /// Get user name by UID (for displaying other party's name in transactions)
+  Future<String> getUserName(String userId) async {
+    try {
+      final userDoc = await getUserDocument(userId);
+      return userDoc?.name ?? 'Unknown User';
+    } catch (e) {
+      return 'Unknown User';
     }
   }
 }
