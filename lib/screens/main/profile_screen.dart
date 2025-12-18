@@ -1,21 +1,47 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
-import '../../constants/app_constants.dart'; // Relative import
-import '../../providers/user_provider.dart'; // Relative import
-import '../../widgets/custom_app_bar.dart'; // Relative import
-import '../auth/login_screen.dart'; // Relative import
-import '../transaction/transaction_history_screen.dart'; // Phase 6: Transaction History
+import '../../constants/app_constants.dart';
+import '../../models/feedback.dart';
+import '../../providers/user_provider.dart';
+import '../../providers/feedback_provider.dart';
+import '../../widgets/custom_app_bar.dart';
+import '../auth/login_screen.dart';
+import '../transaction/transaction_history_screen.dart';
+import '../profile/edit_profile_screen.dart';
+import '../profile/feedback_screen.dart';
 
-class ProfileScreen extends StatelessWidget {
+class ProfileScreen extends StatefulWidget {
   const ProfileScreen({super.key});
+
+  @override
+  State<ProfileScreen> createState() => _ProfileScreenState();
+}
+
+class _ProfileScreenState extends State<ProfileScreen> {
+  @override
+  void initState() {
+    super.initState();
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      _loadFeedbackData();
+    });
+  }
+
+  void _loadFeedbackData() {
+    final user = Provider.of<UserProvider>(context, listen: false).currentUser;
+    if (user != null) {
+      Provider.of<FeedbackProvider>(
+        context,
+        listen: false,
+      ).startListening(user.uid);
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
     final userProvider = Provider.of<UserProvider>(context);
+    final feedbackProvider = Provider.of<FeedbackProvider>(context);
     final user = userProvider.currentUser;
 
-    // If user is null, show loader.
-    // NOTE: This is what causes the issue during logout if we don't navigate first.
     if (user == null) {
       return const Scaffold(
         appBar: CustomAppBar(title: 'My Profile'),
@@ -24,161 +50,365 @@ class ProfileScreen extends StatelessWidget {
     }
 
     return Scaffold(
-      appBar: const CustomAppBar(title: 'My Profile'),
-      body: SingleChildScrollView(
-        child: Column(
-          children: [
-            const SizedBox(height: 24),
-            // Profile Header
-            Center(
-              child: Column(
-                children: [
-                  CircleAvatar(
-                    radius: 50,
-                    // Use .withValues for newer Flutter versions, or .withOpacity for older
-                    backgroundColor: kPrimaryColor.withOpacity(0.2),
-                    backgroundImage: user.profileImageUrl != null
-                        ? NetworkImage(user.profileImageUrl!)
-                        : null,
-                    child: user.profileImageUrl == null
-                        ? Text(
-                            user.name.isNotEmpty
-                                ? user.name[0].toUpperCase()
-                                : '?',
-                            style: const TextStyle(
-                              fontSize: 40,
-                              fontWeight: FontWeight.bold,
-                              color: kPrimaryColor,
-                            ),
-                          )
-                        : null,
-                  ),
-                  const SizedBox(height: 16),
-                  Text(
-                    user.name,
-                    style: Theme.of(context).textTheme.headlineSmall?.copyWith(
-                      fontWeight: FontWeight.bold,
-                    ),
-                  ),
-                  const SizedBox(height: 8),
-                  Container(
-                    padding: const EdgeInsets.symmetric(
-                      horizontal: 12,
-                      vertical: 6,
-                    ),
-                    decoration: BoxDecoration(
-                      // Use .withValues or .withOpacity based on your Flutter version
-                      color: kAccentColor.withOpacity(0.3),
-                      borderRadius: BorderRadius.circular(16),
-                    ),
-                    child: Text(
-                      user.barangay,
-                      style: TextStyle(
-                        color: Colors.brown[800],
-                        fontWeight: FontWeight.bold,
-                        fontSize: 14,
-                      ),
-                    ),
-                  ),
-                ],
+      appBar: CustomAppBar(
+        title: 'My Profile',
+        actions: [
+          IconButton(
+            icon: const Icon(Icons.edit),
+            onPressed: () {
+              Navigator.push(
+                context,
+                MaterialPageRoute(
+                  builder: (context) => const EditProfileScreen(),
+                ),
+              );
+            },
+          ),
+        ],
+      ),
+      body: RefreshIndicator(
+        onRefresh: () async {
+          await userProvider.refreshUser();
+          _loadFeedbackData();
+        },
+        child: SingleChildScrollView(
+          child: Column(
+            children: [
+              const SizedBox(height: 24),
+
+              // Profile Header with Avatar
+              _buildProfileHeader(user),
+              const SizedBox(height: 16),
+
+              // Rating Section
+              _buildRatingSection(feedbackProvider, user.uid, user.name),
+              const SizedBox(height: 24),
+
+              // Stats Section
+              _buildStatsSection(feedbackProvider),
+              const SizedBox(height: 16),
+
+              // Info Section
+              _buildInfoTile(Icons.email, 'Email', user.email),
+              _buildInfoTile(Icons.phone, 'Contact', user.contactNumber),
+
+              const Divider(height: 32, thickness: 1),
+
+              // Recent Feedback Section
+              _buildRecentFeedbackSection(
+                feedbackProvider,
+                user.uid,
+                user.name,
               ),
-            ),
-            const SizedBox(height: 32),
 
-            // Info Section
-            _buildInfoTile(Icons.email, 'Email', user.email),
-            _buildInfoTile(Icons.phone, 'Contact', user.contactNumber),
+              const Divider(height: 32, thickness: 1),
 
-            const Divider(height: 32, thickness: 1),
-
-            // Menu Items
-            ListTile(
-              leading: const Icon(Icons.list_alt),
-              title: const Text('My Listings'),
-              trailing: const Icon(Icons.chevron_right),
-              onTap: () {
-                // Navigate to listings
-              },
-            ),
-            ListTile(
-              leading: const Icon(Icons.history),
-              title: const Text('Transaction History'),
-              trailing: const Icon(Icons.chevron_right),
-              onTap: () {
-                Navigator.push(
-                  context,
-                  MaterialPageRoute(
-                    builder: (context) => const TransactionHistoryScreen(),
-                  ),
-                );
-              },
-            ),
-            ListTile(
-              leading: const Icon(Icons.settings),
-              title: const Text('Settings'),
-              trailing: const Icon(Icons.chevron_right),
-              onTap: () {
-                // Navigate to settings
-              },
-            ),
-
-            if (user.isAdmin) ...[
-              const Divider(),
+              // Menu Items
               ListTile(
-                leading: const Icon(
-                  Icons.admin_panel_settings,
-                  color: Colors.red,
-                ),
-                title: const Text(
-                  'Admin Dashboard',
-                  style: TextStyle(color: Colors.red),
-                ),
-                trailing: const Icon(Icons.chevron_right, color: Colors.red),
+                leading: const Icon(Icons.list_alt),
+                title: const Text('My Listings'),
+                trailing: const Icon(Icons.chevron_right),
                 onTap: () {
-                  // Navigate to admin
+                  // TODO: Navigate to My Listings
                 },
               ),
-            ],
-
-            const SizedBox(height: 32),
-
-            // Logout Button
-            Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 16.0),
-              child: SizedBox(
-                width: double.infinity,
-                child: OutlinedButton.icon(
-                  icon: const Icon(Icons.logout),
-                  label: const Text('Log Out'),
-                  onPressed: () {
-                    // 1. Navigate IMMEDIATELY to LoginScreen.
-                    // This removes the ProfileScreen from the stack, so it won't try to rebuild
-                    // with a null user when the provider updates.
-                    Navigator.of(context).pushAndRemoveUntil(
-                      MaterialPageRoute(
-                        builder: (context) => const LoginScreen(),
-                      ),
-                      (route) => false,
-                    );
-
-                    // 2. Perform the actual logout logic in the background.
-                    // The user is already on the login screen, so they won't see any "null user" loading state.
-                    userProvider.logout();
-                  },
-                  style: OutlinedButton.styleFrom(
-                    foregroundColor: Colors.red,
-                    side: const BorderSide(color: Colors.red),
-                    padding: const EdgeInsets.symmetric(vertical: 12),
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(8),
+              ListTile(
+                leading: const Icon(Icons.history),
+                title: const Text('Transaction History'),
+                trailing: const Icon(Icons.chevron_right),
+                onTap: () {
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                      builder: (context) => const TransactionHistoryScreen(),
                     ),
+                  );
+                },
+              ),
+              ListTile(
+                leading: const Icon(Icons.settings),
+                title: const Text('Settings'),
+                trailing: const Icon(Icons.chevron_right),
+                onTap: () {
+                  // TODO: Navigate to Settings
+                },
+              ),
+
+              if (user.isAdmin) ...[
+                const Divider(),
+                ListTile(
+                  leading: const Icon(
+                    Icons.admin_panel_settings,
+                    color: Colors.red,
                   ),
+                  title: const Text(
+                    'Admin Dashboard',
+                    style: TextStyle(color: Colors.red),
+                  ),
+                  trailing: const Icon(Icons.chevron_right, color: Colors.red),
+                  onTap: () {
+                    // TODO: Navigate to Admin Dashboard (Phase 8)
+                  },
                 ),
+              ],
+
+              const SizedBox(height: 32),
+
+              // Logout Button
+              _buildLogoutButton(userProvider),
+              const SizedBox(height: 24),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildProfileHeader(user) {
+    return Center(
+      child: Column(
+        children: [
+          CircleAvatar(
+            radius: 50,
+            backgroundColor: kPrimaryColor.withOpacity(0.2),
+            backgroundImage: user.profileImageUrl != null
+                ? NetworkImage(user.profileImageUrl!)
+                : null,
+            child: user.profileImageUrl == null
+                ? Text(
+                    user.name.isNotEmpty ? user.name[0].toUpperCase() : '?',
+                    style: const TextStyle(
+                      fontSize: 40,
+                      fontWeight: FontWeight.bold,
+                      color: kPrimaryColor,
+                    ),
+                  )
+                : null,
+          ),
+          const SizedBox(height: 16),
+          Text(
+            user.name,
+            style: Theme.of(
+              context,
+            ).textTheme.headlineSmall?.copyWith(fontWeight: FontWeight.bold),
+          ),
+          const SizedBox(height: 8),
+          Container(
+            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+            decoration: BoxDecoration(
+              color: kAccentColor.withOpacity(0.3),
+              borderRadius: BorderRadius.circular(16),
+            ),
+            child: Text(
+              user.barangay,
+              style: TextStyle(
+                color: Colors.brown[800],
+                fontWeight: FontWeight.bold,
+                fontSize: 14,
               ),
             ),
-            const SizedBox(height: 24),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildRatingSection(
+    FeedbackProvider provider,
+    String userId,
+    String userName,
+  ) {
+    if (provider.totalReviews == 0) {
+      return const SizedBox.shrink();
+    }
+
+    return GestureDetector(
+      onTap: () {
+        Navigator.push(
+          context,
+          MaterialPageRoute(
+            builder: (context) =>
+                FeedbackScreen(userId: userId, userName: userName),
+          ),
+        );
+      },
+      child: Container(
+        margin: const EdgeInsets.symmetric(horizontal: 24),
+        padding: const EdgeInsets.all(16),
+        decoration: BoxDecoration(
+          color: kPrimaryColor.withOpacity(0.1),
+          borderRadius: BorderRadius.circular(12),
+        ),
+        child: Row(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            // Star Rating Display
+            Row(
+              children: List.generate(5, (index) {
+                final starIndex = index + 1;
+                final isFullStar = starIndex <= provider.averageRating.floor();
+                final isHalfStar =
+                    starIndex == provider.averageRating.floor() + 1 &&
+                    provider.averageRating % 1 >= 0.5;
+
+                return Icon(
+                  isFullStar
+                      ? Icons.star
+                      : isHalfStar
+                      ? Icons.star_half
+                      : Icons.star_border,
+                  color: kAccentColor,
+                  size: 24,
+                );
+              }),
+            ),
+            const SizedBox(width: 12),
+            Text(
+              '${provider.averageRating.toStringAsFixed(1)}/5',
+              style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+            ),
+            const SizedBox(width: 8),
+            Text(
+              '(${provider.totalReviews} reviews)',
+              style: TextStyle(color: Colors.grey[600], fontSize: 14),
+            ),
+            const Spacer(),
+            const Icon(Icons.chevron_right, color: Colors.grey),
           ],
         ),
+      ),
+    );
+  }
+
+  Widget _buildStatsSection(FeedbackProvider provider) {
+    final stats = provider.userStats;
+
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 24),
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+        children: [
+          _buildStatItem('Jobs', stats['jobs'] ?? 0, Icons.work),
+          _buildStatItem('Services', stats['services'] ?? 0, Icons.build),
+          _buildStatItem('Rentals', stats['rentals'] ?? 0, Icons.handyman),
+          _buildStatItem(
+            'Transactions',
+            stats['transactions'] ?? 0,
+            Icons.receipt,
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildStatItem(String label, int count, IconData icon) {
+    return Column(
+      children: [
+        Container(
+          padding: const EdgeInsets.all(12),
+          decoration: BoxDecoration(
+            color: Colors.grey[100],
+            borderRadius: BorderRadius.circular(12),
+          ),
+          child: Icon(icon, color: kPrimaryColor),
+        ),
+        const SizedBox(height: 8),
+        Text(
+          '$count',
+          style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 18),
+        ),
+        Text(label, style: TextStyle(color: Colors.grey[600], fontSize: 12)),
+      ],
+    );
+  }
+
+  Widget _buildRecentFeedbackSection(
+    FeedbackProvider provider,
+    String userId,
+    String userName,
+  ) {
+    final recentFeedback = provider.recentFeedback;
+
+    if (recentFeedback.isEmpty) {
+      return const Padding(
+        padding: EdgeInsets.symmetric(horizontal: 24, vertical: 16),
+        child: Text('No reviews yet', style: TextStyle(color: Colors.grey)),
+      );
+    }
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 24),
+          child: Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              const Text(
+                'Recent Reviews',
+                style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
+              ),
+              TextButton(
+                onPressed: () {
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                      builder: (context) =>
+                          FeedbackScreen(userId: userId, userName: userName),
+                    ),
+                  );
+                },
+                child: const Text('View All'),
+              ),
+            ],
+          ),
+        ),
+        ...recentFeedback.map((feedback) => _buildFeedbackCard(feedback)),
+      ],
+    );
+  }
+
+  Widget _buildFeedbackCard(FeedbackModel feedback) {
+    return Container(
+      margin: const EdgeInsets.symmetric(horizontal: 24, vertical: 4),
+      padding: const EdgeInsets.all(12),
+      decoration: BoxDecoration(
+        color: Colors.grey[50],
+        borderRadius: BorderRadius.circular(8),
+        border: Border.all(color: Colors.grey[200]!),
+      ),
+      child: Row(
+        children: [
+          // Star Rating
+          Row(
+            children: List.generate(5, (index) {
+              return Icon(
+                index < feedback.rating ? Icons.star : Icons.star_border,
+                color: kAccentColor,
+                size: 16,
+              );
+            }),
+          ),
+          const SizedBox(width: 12),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  feedback.reviewedByName ?? 'Anonymous',
+                  style: const TextStyle(fontWeight: FontWeight.w500),
+                ),
+                if (feedback.review.isNotEmpty)
+                  Text(
+                    feedback.review,
+                    style: TextStyle(color: Colors.grey[600], fontSize: 13),
+                    maxLines: 2,
+                    overflow: TextOverflow.ellipsis,
+                  ),
+              ],
+            ),
+          ),
+        ],
       ),
     );
   }
@@ -214,6 +444,34 @@ class ProfileScreen extends StatelessWidget {
             ],
           ),
         ],
+      ),
+    );
+  }
+
+  Widget _buildLogoutButton(UserProvider userProvider) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 16.0),
+      child: SizedBox(
+        width: double.infinity,
+        child: OutlinedButton.icon(
+          icon: const Icon(Icons.logout),
+          label: const Text('Log Out'),
+          onPressed: () {
+            Navigator.of(context).pushAndRemoveUntil(
+              MaterialPageRoute(builder: (context) => const LoginScreen()),
+              (route) => false,
+            );
+            userProvider.logout();
+          },
+          style: OutlinedButton.styleFrom(
+            foregroundColor: Colors.red,
+            side: const BorderSide(color: Colors.red),
+            padding: const EdgeInsets.symmetric(vertical: 12),
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(8),
+            ),
+          ),
+        ),
       ),
     );
   }

@@ -100,4 +100,11 @@ class UserProvider extends ChangeNotifier {
     _currentUser = null;
     notifyListeners();
   }
+
+  /// Refresh current user data from Firestore
+  Future<void> refreshUser() async {
+    if (_currentUser != null) {
+      await fetchUserProfile(_currentUser!.uid);
+    }
+  }
 }

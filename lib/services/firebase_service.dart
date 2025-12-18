@@ -4,6 +4,7 @@ import '../models/job.dart';
 import '../models/service.dart';
 import '../models/rental.dart';
 import '../models/transaction.dart';
+import '../models/feedback.dart';
 
 class FirebaseService {
   final FirebaseFirestore _db = FirebaseFirestore.instance;
@@ -96,7 +97,9 @@ class FirebaseService {
         'applicants': FieldValue.arrayUnion([newApplicant.toMap()]),
       });
 
-      DocumentReference transRef = _db.collection('barangay_transactions').doc();
+      DocumentReference transRef = _db
+          .collection('barangay_transactions')
+          .doc();
 
       Map<String, dynamic> transactionData = {
         'type': 'job_application',
@@ -146,7 +149,10 @@ class FirebaseService {
     });
   }
 
-  Future<void> updateService(String serviceId, Map<String, dynamic> data) async {
+  Future<void> updateService(
+    String serviceId,
+    Map<String, dynamic> data,
+  ) async {
     try {
       await _db.collection('barangay_services').doc(serviceId).update(data);
     } catch (e) {
@@ -172,7 +178,9 @@ class FirebaseService {
     required double rate,
   }) async {
     try {
-      DocumentReference transRef = _db.collection('barangay_transactions').doc();
+      DocumentReference transRef = _db
+          .collection('barangay_transactions')
+          .doc();
 
       Map<String, dynamic> transactionData = {
         'type': 'service_booking',
@@ -248,7 +256,9 @@ class FirebaseService {
     required double rentPrice,
   }) async {
     try {
-      DocumentReference transRef = _db.collection('barangay_transactions').doc();
+      DocumentReference transRef = _db
+          .collection('barangay_transactions')
+          .doc();
 
       Map<String, dynamic> transactionData = {
         'type': 'rental_request',
@@ -276,7 +286,10 @@ class FirebaseService {
   /// Fetch a single transaction by ID
   Future<TransactionModel?> getTransaction(String transactionId) async {
     try {
-      final docSnap = await _db.collection('barangay_transactions').doc(transactionId).get();
+      final docSnap = await _db
+          .collection('barangay_transactions')
+          .doc(transactionId)
+          .get();
       if (docSnap.exists) {
         return TransactionModel.fromMap(docSnap.data()!, docSnap.id);
       }
@@ -327,7 +340,10 @@ class FirebaseService {
   }
 
   /// Update transaction status (Pending, Accepted, In Progress, Completed, Cancelled)
-  Future<void> updateTransactionStatus(String transactionId, String newStatus) async {
+  Future<void> updateTransactionStatus(
+    String transactionId,
+    String newStatus,
+  ) async {
     try {
       await _db.collection('barangay_transactions').doc(transactionId).update({
         'status': newStatus,
@@ -371,6 +387,106 @@ class FirebaseService {
       return userDoc?.name ?? 'Unknown User';
     } catch (e) {
       return 'Unknown User';
+    }
+  }
+
+  // --- FEEDBACK METHODS (Phase 7) ---
+
+  /// Submit feedback for a completed transaction
+  Future<void> submitFeedback(FeedbackModel feedback) async {
+    try {
+      DocumentReference docRef = _db.collection('barangay_feedback').doc();
+      await docRef.set(feedback.toMap());
+    } catch (e) {
+      throw Exception('Error submitting feedback: $e');
+    }
+  }
+
+  /// Stream all feedback received by a user
+  Stream<List<FeedbackModel>> getUserFeedbackStream(String userId) {
+    return _db
+        .collection('barangay_feedback')
+        .where('reviewedUser', isEqualTo: userId)
+        .orderBy('createdAt', descending: true)
+        .snapshots()
+        .map((snapshot) {
+          return snapshot.docs.map((doc) {
+            return FeedbackModel.fromMap(doc.data(), doc.id);
+          }).toList();
+        });
+  }
+
+  /// Calculate average rating for a user
+  Future<Map<String, dynamic>> calculateAverageRating(String userId) async {
+    try {
+      final snapshot = await _db
+          .collection('barangay_feedback')
+          .where('reviewedUser', isEqualTo: userId)
+          .get();
+
+      if (snapshot.docs.isEmpty) {
+        return {'average': 0.0, 'count': 0};
+      }
+
+      double total = 0;
+      for (var doc in snapshot.docs) {
+        total += (doc.data()['rating'] ?? 0).toDouble();
+      }
+
+      return {
+        'average': total / snapshot.docs.length,
+        'count': snapshot.docs.length,
+      };
+    } catch (e) {
+      throw Exception('Error calculating average rating: $e');
+    }
+  }
+
+  /// Get user statistics (jobs, services, rentals, transactions count)
+  Future<Map<String, int>> getUserStats(String userId) async {
+    try {
+      final jobsCount = await _db
+          .collection('barangay_jobs')
+          .where('postedBy', isEqualTo: userId)
+          .count()
+          .get();
+
+      final servicesCount = await _db
+          .collection('barangay_services')
+          .where('providerId', isEqualTo: userId)
+          .count()
+          .get();
+
+      final rentalsCount = await _db
+          .collection('barangay_rentals')
+          .where('ownerId', isEqualTo: userId)
+          .count()
+          .get();
+
+      final transactionsCount = await _db
+          .collection('barangay_transactions')
+          .where('initiatedBy', isEqualTo: userId)
+          .count()
+          .get();
+
+      return {
+        'jobs': jobsCount.count ?? 0,
+        'services': servicesCount.count ?? 0,
+        'rentals': rentalsCount.count ?? 0,
+        'transactions': transactionsCount.count ?? 0,
+      };
+    } catch (e) {
+      throw Exception('Error getting user stats: $e');
+    }
+  }
+
+  /// Update user profile
+  Future<void> updateUserProfile(String uid, Map<String, dynamic> data) async {
+    try {
+      data['updatedAt'] = Timestamp.now();
+      await _db.collection('barangay_users').doc(uid).update(data);
+    } catch (e) {
+      throw Exception('Error updating user profile: $e');
     }
   }
 }

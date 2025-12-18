@@ -6,6 +6,7 @@ import '../../providers/transaction_provider.dart';
 import '../../providers/user_provider.dart';
 import '../../widgets/custom_app_bar.dart';
 import 'payment_confirmation_screen.dart';
+import 'submit_feedback_screen.dart';
 
 class TransactionDetailScreen extends StatelessWidget {
   final TransactionModel transaction;
@@ -58,7 +59,12 @@ class TransactionDetailScreen extends StatelessWidget {
             const SizedBox(height: 24),
 
             // Action Buttons
-            _buildActionButtons(context, transactionProvider, isInitiator, isTarget),
+            _buildActionButtons(
+              context,
+              transactionProvider,
+              isInitiator,
+              isTarget,
+            ),
           ],
         ),
       ),
@@ -75,11 +81,7 @@ class TransactionDetailScreen extends StatelessWidget {
             color: _getTypeColor().withOpacity(0.1),
             borderRadius: BorderRadius.circular(16),
           ),
-          child: Icon(
-            _getTypeIcon(),
-            color: _getTypeColor(),
-            size: 28,
-          ),
+          child: Icon(_getTypeIcon(), color: _getTypeColor(), size: 28),
         ),
         const SizedBox(width: 16),
         Expanded(
@@ -117,11 +119,7 @@ class TransactionDetailScreen extends StatelessWidget {
         padding: const EdgeInsets.all(16),
         child: Row(
           children: [
-            Icon(
-              _getStatusIcon(),
-              color: _getStatusColor(),
-              size: 32,
-            ),
+            Icon(_getStatusIcon(), color: _getStatusColor(), size: 32),
             const SizedBox(width: 16),
             Expanded(
               child: Column(
@@ -129,10 +127,7 @@ class TransactionDetailScreen extends StatelessWidget {
                 children: [
                   const Text(
                     'Status',
-                    style: TextStyle(
-                      color: Colors.grey,
-                      fontSize: 13,
-                    ),
+                    style: TextStyle(color: Colors.grey, fontSize: 13),
                   ),
                   const SizedBox(height: 4),
                   Text(
@@ -149,7 +144,10 @@ class TransactionDetailScreen extends StatelessWidget {
             // Payment Status Badge
             if (transaction.transactionAmount > 0)
               Container(
-                padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 12,
+                  vertical: 6,
+                ),
                 decoration: BoxDecoration(
                   color: transaction.isPaid
                       ? Colors.green.withOpacity(0.1)
@@ -168,7 +166,9 @@ class TransactionDetailScreen extends StatelessWidget {
                     Text(
                       transaction.paymentStatus,
                       style: TextStyle(
-                        color: transaction.isPaid ? Colors.green : Colors.orange,
+                        color: transaction.isPaid
+                            ? Colors.green
+                            : Colors.orange,
                         fontWeight: FontWeight.w600,
                         fontSize: 13,
                       ),
@@ -197,10 +197,7 @@ class TransactionDetailScreen extends StatelessWidget {
           children: [
             const Text(
               'Details',
-              style: TextStyle(
-                fontWeight: FontWeight.bold,
-                fontSize: 16,
-              ),
+              style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
             ),
             const SizedBox(height: 16),
             _buildDetailRow(
@@ -248,10 +245,7 @@ class TransactionDetailScreen extends StatelessWidget {
             children: [
               Text(
                 label,
-                style: TextStyle(
-                  color: Colors.grey[600],
-                  fontSize: 12,
-                ),
+                style: TextStyle(color: Colors.grey[600], fontSize: 12),
               ),
               Text(
                 value,
@@ -279,10 +273,7 @@ class TransactionDetailScreen extends StatelessWidget {
           children: [
             const Text(
               'Transaction Amount',
-              style: TextStyle(
-                fontSize: 16,
-                color: Colors.grey,
-              ),
+              style: TextStyle(fontSize: 16, color: Colors.grey),
             ),
             Text(
               '₱${transaction.transactionAmount.toStringAsFixed(2)}',
@@ -309,10 +300,7 @@ class TransactionDetailScreen extends StatelessWidget {
           children: [
             const Text(
               'Timeline',
-              style: TextStyle(
-                fontWeight: FontWeight.bold,
-                fontSize: 16,
-              ),
+              style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
             ),
             const SizedBox(height: 16),
             _buildTimelineItem(
@@ -353,18 +341,10 @@ class TransactionDetailScreen extends StatelessWidget {
         Column(
           children: [
             if (!isFirst)
-              Container(
-                width: 2,
-                height: 12,
-                color: Colors.grey[300],
-              ),
+              Container(width: 2, height: 12, color: Colors.grey[300]),
             Icon(icon, size: 20, color: color ?? Colors.grey[600]),
             if (!isLast)
-              Container(
-                width: 2,
-                height: 12,
-                color: Colors.grey[300],
-              ),
+              Container(width: 2, height: 12, color: Colors.grey[300]),
           ],
         ),
         const SizedBox(width: 12),
@@ -383,10 +363,7 @@ class TransactionDetailScreen extends StatelessWidget {
                 ),
                 Text(
                   _formatDateTime(date),
-                  style: TextStyle(
-                    color: Colors.grey[500],
-                    fontSize: 13,
-                  ),
+                  style: TextStyle(color: Colors.grey[500], fontSize: 13),
                 ),
               ],
             ),
@@ -477,13 +454,7 @@ class TransactionDetailScreen extends StatelessWidget {
         SizedBox(
           width: double.infinity,
           child: OutlinedButton.icon(
-            onPressed: () {
-              ScaffoldMessenger.of(context).showSnackBar(
-                const SnackBar(
-                  content: Text('Feedback feature coming in Phase 7!'),
-                ),
-              );
-            },
+            onPressed: () => _navigateToFeedback(context),
             icon: const Icon(Icons.star_outline),
             label: const Text('Leave Feedback'),
             style: OutlinedButton.styleFrom(
@@ -505,9 +476,7 @@ class TransactionDetailScreen extends StatelessWidget {
             onPressed: () => _handleCancel(context, provider),
             icon: const Icon(Icons.cancel_outlined),
             label: const Text('Cancel Request'),
-            style: TextButton.styleFrom(
-              foregroundColor: Colors.red,
-            ),
+            style: TextButton.styleFrom(foregroundColor: Colors.red),
           ),
         ),
       );
@@ -522,17 +491,19 @@ class TransactionDetailScreen extends StatelessWidget {
         if (buttons.length == 2 && transaction.isPending && isTarget)
           Row(children: buttons)
         else
-          ...buttons.map((b) => Padding(
-                padding: const EdgeInsets.only(bottom: 8),
-                child: b,
-              )),
+          ...buttons.map(
+            (b) => Padding(padding: const EdgeInsets.only(bottom: 8), child: b),
+          ),
       ],
     );
   }
 
   // --- Action Handlers ---
 
-  Future<void> _handleAccept(BuildContext context, TransactionProvider provider) async {
+  Future<void> _handleAccept(
+    BuildContext context,
+    TransactionProvider provider,
+  ) async {
     final confirmed = await _showConfirmDialog(
       context,
       'Accept Transaction',
@@ -562,7 +533,10 @@ class TransactionDetailScreen extends StatelessWidget {
     }
   }
 
-  Future<void> _handleDecline(BuildContext context, TransactionProvider provider) async {
+  Future<void> _handleDecline(
+    BuildContext context,
+    TransactionProvider provider,
+  ) async {
     final confirmed = await _showConfirmDialog(
       context,
       'Decline Transaction',
@@ -593,7 +567,10 @@ class TransactionDetailScreen extends StatelessWidget {
     }
   }
 
-  Future<void> _handleCancel(BuildContext context, TransactionProvider provider) async {
+  Future<void> _handleCancel(
+    BuildContext context,
+    TransactionProvider provider,
+  ) async {
     final confirmed = await _showConfirmDialog(
       context,
       'Cancel Request',
@@ -624,7 +601,10 @@ class TransactionDetailScreen extends StatelessWidget {
     }
   }
 
-  Future<void> _handleComplete(BuildContext context, TransactionProvider provider) async {
+  Future<void> _handleComplete(
+    BuildContext context,
+    TransactionProvider provider,
+  ) async {
     final confirmed = await _showConfirmDialog(
       context,
       'Complete Transaction',
@@ -658,7 +638,17 @@ class TransactionDetailScreen extends StatelessWidget {
     Navigator.push(
       context,
       MaterialPageRoute(
-        builder: (context) => PaymentConfirmationScreen(transaction: transaction),
+        builder: (context) =>
+            PaymentConfirmationScreen(transaction: transaction),
+      ),
+    );
+  }
+
+  void _navigateToFeedback(BuildContext context) {
+    Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (context) => SubmitFeedbackScreen(transaction: transaction),
       ),
     );
   }
