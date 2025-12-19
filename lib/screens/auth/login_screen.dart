@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../../providers/user_provider.dart';
 import '../../utils/validators.dart';
-import '../../widgets/custom_button.dart';
 import 'register_screen.dart';
 import 'forgot_password_screen.dart';
 import '../main/main_app_screen.dart'; // CHANGED: Import MainAppScreen
@@ -60,99 +59,163 @@ class _LoginScreenState extends State<LoginScreen> {
   Widget build(BuildContext context) {
     final userProvider = Provider.of<UserProvider>(context);
 
+    // Modern Gradient Layout
     return Scaffold(
-      appBar: AppBar(title: const Text('Login to BarangayLink')),
-      body: Center(
-        child: SingleChildScrollView(
-          padding: const EdgeInsets.all(24.0),
-          child: Form(
-            key: _formKey,
-            child: Column(
-              mainAxisAlignment: MainAxisAlignment.center,
-              crossAxisAlignment: CrossAxisAlignment.stretch,
-              children: [
-                Center(child: Image.asset('assets/logo.png', height: 120)),
-                const SizedBox(height: 24.0),
-                Text(
-                  'Welcome Back!',
-                  style: Theme.of(context).textTheme.headlineMedium,
-                  textAlign: TextAlign.center,
-                ),
-                const SizedBox(height: 32.0),
-                TextFormField(
-                  controller: _emailController,
-                  decoration: const InputDecoration(
-                    labelText: 'Email',
-                    border: OutlineInputBorder(),
-                    prefixIcon: Icon(Icons.email),
-                  ),
-                  validator: Validators.validateEmail,
-                  keyboardType: TextInputType.emailAddress,
-                  textInputAction: TextInputAction.next,
-                ),
-                const SizedBox(height: 16.0),
-                TextFormField(
-                  controller: _passwordController,
-                  obscureText: _obscurePassword,
-                  decoration: InputDecoration(
-                    labelText: 'Password',
-                    border: const OutlineInputBorder(),
-                    prefixIcon: const Icon(Icons.lock),
-                    suffixIcon: IconButton(
-                      icon: Icon(
-                        _obscurePassword
-                            ? Icons.visibility_off
-                            : Icons.visibility,
+      body: Container(
+        decoration: BoxDecoration(
+          gradient: LinearGradient(
+            begin: Alignment.topLeft,
+            end: Alignment.bottomRight,
+            colors: [
+              Theme.of(context).colorScheme.primary,
+              Theme.of(context).colorScheme.secondary,
+            ],
+          ),
+        ),
+        child: Center(
+          child: SingleChildScrollView(
+            padding: const EdgeInsets.all(24.0),
+            child: Card(
+              elevation: 8,
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(24),
+              ),
+              child: Padding(
+                padding: const EdgeInsets.all(32.0),
+                child: Form(
+                  key: _formKey,
+                  child: Column(
+                    mainAxisSize: MainAxisSize.min, // Shrink to fit content
+                    crossAxisAlignment: CrossAxisAlignment.stretch,
+                    children: [
+                      // Logo or Icon
+                      const Icon(
+                        Icons.location_city,
+                        size: 64,
+                        color: Colors.green,
+                      ), // Fallback if logo fails
+                      // If you have a logo, uncomment:
+                      // Image.asset('assets/logo.png', height: 80),
+                      const SizedBox(height: 24.0),
+                      Text(
+                        'Welcome to\nBarangayLink',
+                        style: Theme.of(context).textTheme.headlineSmall
+                            ?.copyWith(
+                              fontWeight: FontWeight.bold,
+                              color: Theme.of(context).colorScheme.primary,
+                            ),
+                        textAlign: TextAlign.center,
                       ),
-                      onPressed: () {
-                        setState(() {
-                          _obscurePassword = !_obscurePassword;
-                        });
-                      },
-                    ),
-                  ),
-                  validator: Validators.validatePassword,
-                  textInputAction: TextInputAction.done,
-                  onFieldSubmitted: (_) => _login(),
-                ),
-                const SizedBox(height: 8.0),
-                Align(
-                  alignment: Alignment.centerRight,
-                  child: TextButton(
-                    onPressed: () {
-                      Navigator.of(context).push(
-                        MaterialPageRoute(
-                          builder: (context) => const ForgotPasswordScreen(),
+                      const SizedBox(height: 8.0),
+                      Text(
+                        'Connect with your community',
+                        style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                          color: Colors.grey[600],
                         ),
-                      );
-                    },
-                    child: const Text('Forgot Password?'),
+                        textAlign: TextAlign.center,
+                      ),
+                      const SizedBox(height: 32.0),
+
+                      // Email
+                      TextFormField(
+                        controller: _emailController,
+                        decoration: const InputDecoration(
+                          labelText: 'Email Address',
+                          prefixIcon: Icon(Icons.email_outlined),
+                        ),
+                        validator: Validators.validateEmail,
+                        keyboardType: TextInputType.emailAddress,
+                        textInputAction: TextInputAction.next,
+                      ),
+                      const SizedBox(height: 16.0),
+
+                      // Password
+                      TextFormField(
+                        controller: _passwordController,
+                        obscureText: _obscurePassword,
+                        decoration: InputDecoration(
+                          labelText: 'Password',
+                          prefixIcon: const Icon(Icons.lock_outlined),
+                          suffixIcon: IconButton(
+                            icon: Icon(
+                              _obscurePassword
+                                  ? Icons.visibility_off
+                                  : Icons.visibility,
+                            ),
+                            onPressed: () {
+                              setState(() {
+                                _obscurePassword = !_obscurePassword;
+                              });
+                            },
+                          ),
+                        ),
+                        validator: Validators.validatePassword,
+                        textInputAction: TextInputAction.done,
+                        onFieldSubmitted: (_) => _login(),
+                      ),
+
+                      // Forgot Password
+                      Align(
+                        alignment: Alignment.centerRight,
+                        child: TextButton(
+                          onPressed: () {
+                            Navigator.of(context).push(
+                              MaterialPageRoute(
+                                builder: (context) =>
+                                    const ForgotPasswordScreen(),
+                              ),
+                            );
+                          },
+                          child: const Text('Forgot Password?'),
+                        ),
+                      ),
+
+                      const SizedBox(height: 24.0),
+
+                      // Login Button
+                      SizedBox(
+                        height: 50,
+                        child: ElevatedButton(
+                          onPressed: userProvider.isLoading ? null : _login,
+                          child: userProvider.isLoading
+                              ? const SizedBox(
+                                  height: 24,
+                                  width: 24,
+                                  child: CircularProgressIndicator(
+                                    color: Colors.white,
+                                    strokeWidth: 2,
+                                  ),
+                                )
+                              : const Text('Login'),
+                        ),
+                      ),
+
+                      const SizedBox(height: 24.0),
+
+                      // Register Link
+                      Row(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          Text(
+                            "New here?",
+                            style: TextStyle(color: Colors.grey[600]),
+                          ),
+                          TextButton(
+                            onPressed: () {
+                              Navigator.of(context).pushReplacement(
+                                MaterialPageRoute(
+                                  builder: (context) => const RegisterScreen(),
+                                ),
+                              );
+                            },
+                            child: const Text('Create Account'),
+                          ),
+                        ],
+                      ),
+                    ],
                   ),
                 ),
-                const SizedBox(height: 24.0),
-                CustomButton(
-                  text: 'Login',
-                  onPressed: _login,
-                  isLoading: userProvider.isLoading,
-                ),
-                const SizedBox(height: 16.0),
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
-                    const Text("Don't have an account?"),
-                    TextButton(
-                      onPressed: () {
-                        Navigator.of(context).pushReplacement(
-                          MaterialPageRoute(
-                            builder: (context) => const RegisterScreen(),
-                          ),
-                        );
-                      },
-                      child: const Text('Register'),
-                    ),
-                  ],
-                ),
-              ],
+              ),
             ),
           ),
         ),

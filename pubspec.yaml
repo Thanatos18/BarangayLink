@@ -43,6 +43,9 @@ dependencies:
   # State Management
   provider: ^6.0.0
 
+  # Fonts
+  google_fonts: ^6.1.0
+
   # Other utilities
   firebase_storage: ^13.0.4
   image: ^4.0.0

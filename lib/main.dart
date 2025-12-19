@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:provider/provider.dart';
+import 'package:google_fonts/google_fonts.dart';
 import 'constants/app_constants.dart'; // Relative import
 import 'providers/user_provider.dart'; // Relative import
 import 'providers/barangay_provider.dart'; // Relative import
@@ -41,19 +42,34 @@ class MyApp extends StatelessWidget {
 
         // Modern Material 3 Theme Setup
         theme: ThemeData(
-          useMaterial3: true, // Enable Material 3
+          useMaterial3: true,
+          scaffoldBackgroundColor: kBackgroundColor,
           colorScheme: ColorScheme.fromSeed(
-            seedColor:
-                kPrimaryColor, // Generates a full palette from your green
+            seedColor: kPrimaryColor,
             primary: kPrimaryColor,
-            secondary: kAccentColor,
+            secondary: kSecondaryColor,
+            tertiary: kAccentColor,
+            surface: kSurfaceColor,
+            error: kErrorColor,
+            brightness: Brightness.light,
           ),
 
+          // Typography
+          textTheme: GoogleFonts.poppinsTextTheme(),
+
           // Global AppBar Theme
-          appBarTheme: const AppBarTheme(
-            backgroundColor: kPrimaryColor,
-            foregroundColor: Colors.white,
+          appBarTheme: AppBarTheme(
+            backgroundColor: kSurfaceColor,
+            foregroundColor: kTextPrimary,
             centerTitle: true,
+            elevation: 0,
+            scrolledUnderElevation: 0,
+            titleTextStyle: GoogleFonts.poppins(
+              color: kTextPrimary,
+              fontSize: 18,
+              fontWeight: FontWeight.w600,
+            ),
+            iconTheme: const IconThemeData(color: kTextPrimary),
           ),
 
           // Global Button Theme
