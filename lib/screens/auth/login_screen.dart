@@ -71,6 +71,8 @@ class _LoginScreenState extends State<LoginScreen> {
               mainAxisAlignment: MainAxisAlignment.center,
               crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
+                Center(child: Image.asset('assets/logo.png', height: 120)),
+                const SizedBox(height: 24.0),
                 Text(
                   'Welcome Back!',
                   style: Theme.of(context).textTheme.headlineMedium,
@@ -86,6 +88,7 @@ class _LoginScreenState extends State<LoginScreen> {
                   ),
                   validator: Validators.validateEmail,
                   keyboardType: TextInputType.emailAddress,
+                  textInputAction: TextInputAction.next,
                 ),
                 const SizedBox(height: 16.0),
                 TextFormField(
@@ -109,6 +112,8 @@ class _LoginScreenState extends State<LoginScreen> {
                     ),
                   ),
                   validator: Validators.validatePassword,
+                  textInputAction: TextInputAction.done,
+                  onFieldSubmitted: (_) => _login(),
                 ),
                 const SizedBox(height: 8.0),
                 Align(

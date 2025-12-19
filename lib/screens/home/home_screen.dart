@@ -28,6 +28,10 @@ class HomeScreen extends StatelessWidget {
     return Scaffold(
       appBar: CustomAppBar(
         title: 'BarangayLink',
+        leading: Padding(
+          padding: const EdgeInsets.all(8.0),
+          child: Image.asset('assets/logo.png'),
+        ),
         actions: [
           IconButton(
             icon: const Icon(Icons.notifications_outlined),
@@ -261,26 +265,50 @@ class HomeScreen extends StatelessWidget {
   Widget _buildPlaceholderList() {
     return SizedBox(
       height: 120,
-      child: ListView.builder(
+      child: ListView(
         scrollDirection: Axis.horizontal,
         padding: const EdgeInsets.symmetric(horizontal: 16),
-        itemCount: 3,
-        itemBuilder: (context, index) {
-          return Container(
-            width: 200,
-            margin: const EdgeInsets.only(right: 12),
-            decoration: BoxDecoration(
-              color: Colors.grey[100],
-              borderRadius: BorderRadius.circular(8),
+        children: [
+          _buildEmptyStateCard(
+            icon: Icons.explore,
+            message: 'Tap "See All" to explore',
+          ),
+          const SizedBox(width: 12),
+          _buildEmptyStateCard(
+            icon: Icons.add_circle_outline,
+            message: 'Be the first to post!',
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildEmptyStateCard({
+    required IconData icon,
+    required String message,
+  }) {
+    return Container(
+      width: 200,
+      decoration: BoxDecoration(
+        color: Colors.grey[50],
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(color: Colors.grey.shade200),
+      ),
+      child: Column(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          Icon(icon, size: 32, color: Colors.grey[400]),
+          const SizedBox(height: 8),
+          Text(
+            message,
+            style: TextStyle(
+              color: Colors.grey[500],
+              fontSize: 13,
+              fontWeight: FontWeight.w500,
             ),
-            child: Center(
-              child: Text(
-                'Item ${index + 1}',
-                style: TextStyle(color: Colors.grey[400]),
-              ),
-            ),
-          );
-        },
+            textAlign: TextAlign.center,
+          ),
+        ],
       ),
     );
   }
