@@ -5,6 +5,7 @@ import '../models/service.dart';
 import '../models/rental.dart';
 import '../models/transaction.dart';
 import '../models/feedback.dart';
+import '../models/report.dart';
 
 class FirebaseService {
   final FirebaseFirestore _db = FirebaseFirestore.instance;
@@ -487,6 +488,162 @@ class FirebaseService {
       await _db.collection('barangay_users').doc(uid).update(data);
     } catch (e) {
       throw Exception('Error updating user profile: $e');
+    }
+  }
+
+  // --- ADMIN METHODS (Phase 8) ---
+
+  /// Get all users with optional pagination
+  Future<List<UserModel>> getAllUsers({
+    int limit = 50,
+    DocumentSnapshot? lastDoc,
+  }) async {
+    try {
+      Query query = _db
+          .collection('barangay_users')
+          .orderBy('name')
+          .limit(limit);
+
+      if (lastDoc != null) {
+        query = query.startAfterDocument(lastDoc);
+      }
+
+      final snapshot = await query.get();
+      return snapshot.docs.map((doc) {
+        return UserModel.fromMap(doc.data() as Map<String, dynamic>, doc.id);
+      }).toList();
+    } catch (e) {
+      throw Exception('Error fetching users: $e');
+    }
+  }
+
+  /// Update user ban status
+  Future<void> updateUserBanStatus(String uid, bool isBanned) async {
+    try {
+      await _db.collection('barangay_users').doc(uid).update({
+        'isBanned': isBanned,
+        'bannedAt': isBanned ? Timestamp.now() : null,
+        'updatedAt': Timestamp.now(),
+      });
+    } catch (e) {
+      throw Exception('Error updating user ban status: $e');
+    }
+  }
+
+  /// Submit a report
+  Future<void> submitReport(ReportModel report) async {
+    try {
+      await _db.collection('barangay_reports').add(report.toMap());
+    } catch (e) {
+      throw Exception('Error submitting report: $e');
+    }
+  }
+
+  /// Stream all pending reports
+  Stream<List<ReportModel>> getReportsStream() {
+    return _db
+        .collection('barangay_reports')
+        .orderBy('createdAt', descending: true)
+        .snapshots()
+        .map((snapshot) {
+          return snapshot.docs.map((doc) {
+            return ReportModel.fromMap(doc.data(), doc.id);
+          }).toList();
+        });
+  }
+
+  /// Resolve a report
+  Future<void> resolveReport(
+    String reportId,
+    String resolution,
+    String resolvedBy,
+  ) async {
+    try {
+      await _db.collection('barangay_reports').doc(reportId).update({
+        'status': 'resolved',
+        'resolution': resolution,
+        'resolvedBy': resolvedBy,
+        'resolvedAt': Timestamp.now(),
+      });
+    } catch (e) {
+      throw Exception('Error resolving report: $e');
+    }
+  }
+
+  /// Dismiss a report
+  Future<void> dismissReport(String reportId, String resolvedBy) async {
+    try {
+      await _db.collection('barangay_reports').doc(reportId).update({
+        'status': 'dismissed',
+        'resolvedBy': resolvedBy,
+        'resolvedAt': Timestamp.now(),
+      });
+    } catch (e) {
+      throw Exception('Error dismissing report: $e');
+    }
+  }
+
+  /// Delete an item (for content moderation)
+  Future<void> deleteItem(String collection, String itemId) async {
+    try {
+      await _db.collection(collection).doc(itemId).delete();
+    } catch (e) {
+      throw Exception('Error deleting item: $e');
+    }
+  }
+
+  /// Get admin dashboard statistics
+  Future<Map<String, int>> getAdminStats() async {
+    try {
+      final usersCount = await _db.collection('barangay_users').count().get();
+      final jobsCount = await _db.collection('barangay_jobs').count().get();
+      final servicesCount = await _db
+          .collection('barangay_services')
+          .count()
+          .get();
+      final rentalsCount = await _db
+          .collection('barangay_rentals')
+          .count()
+          .get();
+      final transactionsCount = await _db
+          .collection('barangay_transactions')
+          .count()
+          .get();
+      final reportsCount = await _db
+          .collection('barangay_reports')
+          .where('status', isEqualTo: 'pending')
+          .count()
+          .get();
+
+      return {
+        'users': usersCount.count ?? 0,
+        'jobs': jobsCount.count ?? 0,
+        'services': servicesCount.count ?? 0,
+        'rentals': rentalsCount.count ?? 0,
+        'transactions': transactionsCount.count ?? 0,
+        'pendingReports': reportsCount.count ?? 0,
+      };
+    } catch (e) {
+      throw Exception('Error getting admin stats: $e');
+    }
+  }
+
+  /// Search users by name or email
+  Future<List<UserModel>> searchUsers(String query) async {
+    try {
+      // Search by name (starts with)
+      final nameSnapshot = await _db
+          .collection('barangay_users')
+          .where('name', isGreaterThanOrEqualTo: query)
+          .where('name', isLessThanOrEqualTo: '$query\uf8ff')
+          .limit(20)
+          .get();
+
+      return nameSnapshot.docs.map((doc) {
+        return UserModel.fromMap(doc.data(), doc.id);
+      }).toList();
+    } catch (e) {
+      throw Exception('Error searching users: $e');
     }
   }
 }

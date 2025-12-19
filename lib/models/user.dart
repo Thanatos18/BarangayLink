@@ -11,6 +11,7 @@ class UserModel {
   final DateTime createdAt;
   final DateTime updatedAt;
   final bool isActive;
+  final bool isBanned;
 
   UserModel({
     required this.uid,
@@ -23,6 +24,7 @@ class UserModel {
     required this.createdAt,
     required this.updatedAt,
     this.isActive = true, // Default active
+    this.isBanned = false, // Default not banned
   });
 
   // Method to check if user is admin
@@ -49,6 +51,7 @@ class UserModel {
       'createdAt': Timestamp.fromDate(createdAt),
       'updatedAt': Timestamp.fromDate(updatedAt),
       'isActive': isActive,
+      'isBanned': isBanned,
     };
   }
 
@@ -66,6 +69,7 @@ class UserModel {
       createdAt: (map['createdAt'] as Timestamp?)?.toDate() ?? DateTime.now(),
       updatedAt: (map['updatedAt'] as Timestamp?)?.toDate() ?? DateTime.now(),
       isActive: map['isActive'] ?? true,
+      isBanned: map['isBanned'] ?? false,
     );
   }
 
@@ -78,11 +82,12 @@ class UserModel {
     String? contactNumber,
     DateTime? updatedAt,
     bool? isActive,
+    bool? isBanned,
   }) {
     return UserModel(
-      uid: this.uid, // ID never changes
-      email: this.email, // Email usually doesn't change here
-      createdAt: this.createdAt, // Created date never changes
+      uid: uid, // ID never changes
+      email: email, // Email usually doesn't change here
+      createdAt: createdAt, // Created date never changes
       name: name ?? this.name,
       barangay: barangay ?? this.barangay,
       role: role ?? this.role,
@@ -90,6 +95,7 @@ class UserModel {
       contactNumber: contactNumber ?? this.contactNumber,
       updatedAt: updatedAt ?? this.updatedAt,
       isActive: isActive ?? this.isActive,
+      isBanned: isBanned ?? this.isBanned,
     );
   }
 }

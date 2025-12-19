@@ -9,6 +9,7 @@ import '../auth/login_screen.dart';
 import '../transaction/transaction_history_screen.dart';
 import '../profile/edit_profile_screen.dart';
 import '../profile/feedback_screen.dart';
+import '../admin/admin_dashboard_screen.dart';
 
 class ProfileScreen extends StatefulWidget {
   const ProfileScreen({super.key});
@@ -147,7 +148,12 @@ class _ProfileScreenState extends State<ProfileScreen> {
                   ),
                   trailing: const Icon(Icons.chevron_right, color: Colors.red),
                   onTap: () {
-                    // TODO: Navigate to Admin Dashboard (Phase 8)
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder: (context) => const AdminDashboardScreen(),
+                      ),
+                    );
                   },
                 ),
               ],
