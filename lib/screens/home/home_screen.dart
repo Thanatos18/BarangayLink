@@ -29,9 +29,12 @@ class HomeScreen extends StatelessWidget {
     return Scaffold(
       appBar: CustomAppBar(
         title: 'BarangayLink',
-        leading: Padding(
-          padding: const EdgeInsets.all(8.0),
-          child: Image.asset('assets/logo.png'),
+        leading: const Padding(
+          padding: EdgeInsets.all(8.0),
+          child: CircleAvatar(
+            backgroundImage: AssetImage('assets/logo.png'),
+            backgroundColor: Colors.white, // Fallback/margin color
+          ),
         ),
         actions: [
           IconButton(
