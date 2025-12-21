@@ -6,6 +6,7 @@ import '../models/rental.dart';
 import '../models/transaction.dart';
 import '../models/feedback.dart';
 import '../models/report.dart';
+import '../models/notification.dart';
 
 class FirebaseService {
   final FirebaseFirestore _db = FirebaseFirestore.instance;
@@ -644,6 +645,78 @@ class FirebaseService {
       }).toList();
     } catch (e) {
       throw Exception('Error searching users: $e');
+    }
+  }
+
+  // --- NOTIFICATION METHODS (Phase 9) ---
+
+  /// Create a notification for a user
+  Future<void> createNotification(NotificationModel notification) async {
+    try {
+      await _db.collection('barangay_notifications').add(notification.toMap());
+    } catch (e) {
+      throw Exception('Error creating notification: $e');
+    }
+  }
+
+  /// Stream user's notifications
+  Stream<List<NotificationModel>> getUserNotificationsStream(String userId) {
+    return _db
+        .collection('barangay_notifications')
+        .where('userId', isEqualTo: userId)
+        .orderBy('createdAt', descending: true)
+        .limit(50)
+        .snapshots()
+        .map((snapshot) {
+          return snapshot.docs.map((doc) {
+            return NotificationModel.fromMap(doc.data(), doc.id);
+          }).toList();
+        });
+  }
+
+  /// Mark a notification as read
+  Future<void> markNotificationAsRead(String notificationId) async {
+    try {
+      await _db.collection('barangay_notifications').doc(notificationId).update(
+        {'isRead': true},
+      );
+    } catch (e) {
+      throw Exception('Error marking notification as read: $e');
+    }
+  }
+
+  /// Mark all notifications as read for a user
+  Future<void> markAllNotificationsAsRead(String userId) async {
+    try {
+      final batch = _db.batch();
+      final snapshot = await _db
+          .collection('barangay_notifications')
+          .where('userId', isEqualTo: userId)
+          .where('isRead', isEqualTo: false)
+          .get();
+
+      for (var doc in snapshot.docs) {
+        batch.update(doc.reference, {'isRead': true});
+      }
+
+      await batch.commit();
+    } catch (e) {
+      throw Exception('Error marking all notifications as read: $e');
+    }
+  }
+
+  /// Get unread notification count for a user
+  Future<int> getUnreadNotificationCount(String userId) async {
+    try {
+      final count = await _db
+          .collection('barangay_notifications')
+          .where('userId', isEqualTo: userId)
+          .where('isRead', isEqualTo: false)
+          .count()
+          .get();
+      return count.count ?? 0;
+    } catch (e) {
+      return 0;
     }
   }
 }

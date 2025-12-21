@@ -1,10 +1,16 @@
 import 'package:flutter/material.dart';
-import 'package:flutter_application_1/screens/home/home_screen.dart'; // Relative import
-import 'jobs_screen.dart'; // Relative import
-import 'profile_screen.dart'; // Relative import
-import 'rentals_screen.dart'; // Relative import
-import 'services_screen.dart'; // Relative import
-import '../../widgets/bottom_nav_bar.dart'; // Relative import
+import 'package:provider/provider.dart';
+import 'package:flutter_application_1/screens/home/home_screen.dart';
+import '../../constants/app_constants.dart';
+import '../../providers/notification_provider.dart';
+import '../../providers/user_provider.dart';
+import '../notifications/notifications_screen.dart';
+import '../search/search_screen.dart';
+import 'jobs_screen.dart';
+import 'profile_screen.dart';
+import 'rentals_screen.dart';
+import 'services_screen.dart';
+import '../../widgets/bottom_nav_bar.dart';
 
 class MainAppScreen extends StatefulWidget {
   const MainAppScreen({super.key});
@@ -30,6 +36,20 @@ class _MainAppScreenState extends State<MainAppScreen> {
       const RentalsScreen(),
       const ProfileScreen(),
     ];
+
+    // Initialize notifications
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      final user = Provider.of<UserProvider>(
+        context,
+        listen: false,
+      ).currentUser;
+      if (user != null) {
+        Provider.of<NotificationProvider>(
+          context,
+          listen: false,
+        ).startListening(user.uid);
+      }
+    });
   }
 
   void _navigateToTab(int index) {
@@ -41,12 +61,80 @@ class _MainAppScreenState extends State<MainAppScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      appBar: _buildAppBar(),
       // IndexedStack preserves the state of each tab
       body: IndexedStack(index: _currentIndex, children: _screens),
       bottomNavigationBar: BottomNavBar(
         currentIndex: _currentIndex,
         onTap: _navigateToTab,
       ),
+    );
+  }
+
+  PreferredSizeWidget _buildAppBar() {
+    return AppBar(
+      title: const Text(
+        'BarangayLink',
+        style: TextStyle(fontWeight: FontWeight.bold),
+      ),
+      centerTitle: false,
+      backgroundColor: kPrimaryColor,
+      foregroundColor: Colors.white,
+      elevation: 0,
+      actions: [
+        // Search Button
+        IconButton(
+          icon: const Icon(Icons.search),
+          onPressed: () {
+            Navigator.push(
+              context,
+              MaterialPageRoute(builder: (_) => const SearchScreen()),
+            );
+          },
+        ),
+        // Notification Button with Badge
+        Consumer<NotificationProvider>(
+          builder: (context, notifProvider, child) {
+            return Stack(
+              children: [
+                IconButton(
+                  icon: const Icon(Icons.notifications_outlined),
+                  onPressed: () {
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder: (_) => const NotificationsScreen(),
+                      ),
+                    );
+                  },
+                ),
+                if (notifProvider.hasUnread)
+                  Positioned(
+                    right: 8,
+                    top: 8,
+                    child: Container(
+                      padding: const EdgeInsets.all(4),
+                      decoration: const BoxDecoration(
+                        color: Colors.red,
+                        shape: BoxShape.circle,
+                      ),
+                      child: Text(
+                        notifProvider.unreadCount > 9
+                            ? '9+'
+                            : '${notifProvider.unreadCount}',
+                        style: const TextStyle(
+                          color: Colors.white,
+                          fontSize: 10,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
+                    ),
+                  ),
+              ],
+            );
+          },
+        ),
+      ],
     );
   }
 }
