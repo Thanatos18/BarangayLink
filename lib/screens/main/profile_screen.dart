@@ -10,6 +10,8 @@ import '../transaction/transaction_history_screen.dart';
 import '../profile/edit_profile_screen.dart';
 import '../profile/feedback_screen.dart';
 import '../admin/admin_dashboard_screen.dart';
+import '../favorites/favorites_screen.dart';
+import '../settings/settings_screen.dart';
 
 class ProfileScreen extends StatefulWidget {
   const ProfileScreen({super.key});
@@ -126,6 +128,19 @@ class _ProfileScreenState extends State<ProfileScreen> {
 
               // Menu Items
               ListTile(
+                leading: const Icon(Icons.favorite, color: Colors.red),
+                title: const Text('My Favorites'),
+                trailing: const Icon(Icons.chevron_right),
+                onTap: () {
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                      builder: (context) => const FavoritesScreen(),
+                    ),
+                  );
+                },
+              ),
+              ListTile(
                 leading: const Icon(Icons.list_alt),
                 title: const Text('My Listings'),
                 trailing: const Icon(Icons.chevron_right),
@@ -151,7 +166,12 @@ class _ProfileScreenState extends State<ProfileScreen> {
                 title: const Text('Settings'),
                 trailing: const Icon(Icons.chevron_right),
                 onTap: () {
-                  // TODO: Navigate to Settings
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                      builder: (context) => const SettingsScreen(),
+                    ),
+                  );
                 },
               ),
 

@@ -7,6 +7,7 @@ import '../models/transaction.dart';
 import '../models/feedback.dart';
 import '../models/report.dart';
 import '../models/notification.dart';
+import '../models/favorite.dart';
 
 class FirebaseService {
   final FirebaseFirestore _db = FirebaseFirestore.instance;
@@ -717,6 +718,84 @@ class FirebaseService {
       return count.count ?? 0;
     } catch (e) {
       return 0;
+    }
+  }
+
+  // --- FAVORITES METHODS (Phase 10) ---
+
+  /// Add item to favorites
+  Future<void> addFavorite({
+    required String userId,
+    required String itemId,
+    required String itemType,
+    required String itemTitle,
+  }) async {
+    try {
+      // Check if already favorited
+      final existing = await _db
+          .collection('barangay_favorites')
+          .where('userId', isEqualTo: userId)
+          .where('itemId', isEqualTo: itemId)
+          .limit(1)
+          .get();
+
+      if (existing.docs.isNotEmpty) return; // Already favorited
+
+      await _db.collection('barangay_favorites').add({
+        'userId': userId,
+        'itemId': itemId,
+        'itemType': itemType,
+        'itemTitle': itemTitle,
+        'createdAt': Timestamp.now(),
+      });
+    } catch (e) {
+      throw Exception('Error adding favorite: $e');
+    }
+  }
+
+  /// Remove item from favorites
+  Future<void> removeFavorite(String userId, String itemId) async {
+    try {
+      final snapshot = await _db
+          .collection('barangay_favorites')
+          .where('userId', isEqualTo: userId)
+          .where('itemId', isEqualTo: itemId)
+          .get();
+
+      for (var doc in snapshot.docs) {
+        await doc.reference.delete();
+      }
+    } catch (e) {
+      throw Exception('Error removing favorite: $e');
+    }
+  }
+
+  /// Stream user's favorites
+  Stream<List<FavoriteModel>> getUserFavoritesStream(String userId) {
+    return _db
+        .collection('barangay_favorites')
+        .where('userId', isEqualTo: userId)
+        .orderBy('createdAt', descending: true)
+        .snapshots()
+        .map((snapshot) {
+          return snapshot.docs.map((doc) {
+            return FavoriteModel.fromMap(doc.data(), doc.id);
+          }).toList();
+        });
+  }
+
+  /// Check if item is favorited by user
+  Future<bool> isFavorite(String userId, String itemId) async {
+    try {
+      final snapshot = await _db
+          .collection('barangay_favorites')
+          .where('userId', isEqualTo: userId)
+          .where('itemId', isEqualTo: itemId)
+          .limit(1)
+          .get();
+      return snapshot.docs.isNotEmpty;
+    } catch (e) {
+      return false;
     }
   }
 }
