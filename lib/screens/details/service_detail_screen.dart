@@ -4,6 +4,8 @@ import '../../constants/app_constants.dart';
 import '../../models/service.dart';
 import '../../providers/services_provider.dart';
 import '../../providers/user_provider.dart';
+import '../../providers/favorites_provider.dart';
+import '../../models/favorite.dart';
 import '../create/edit_service_screen.dart';
 
 class ServiceDetailScreen extends StatelessWidget {
@@ -24,35 +26,72 @@ class ServiceDetailScreen extends StatelessWidget {
         title: const Text('Service Details'),
         backgroundColor: kPrimaryColor,
         foregroundColor: Colors.white,
-        actions: canModify
-            ? [
-                PopupMenuButton<String>(
-                  onSelected: (value) => _handleMenuAction(context, value),
-                  itemBuilder: (context) => [
-                    const PopupMenuItem(
-                      value: 'edit',
-                      child: Row(
-                        children: [
-                          Icon(Icons.edit, color: Colors.blue),
-                          SizedBox(width: 8),
-                          Text('Edit Service'),
-                        ],
-                      ),
-                    ),
-                    const PopupMenuItem(
-                      value: 'delete',
-                      child: Row(
-                        children: [
-                          Icon(Icons.delete, color: Colors.red),
-                          SizedBox(width: 8),
-                          Text('Delete Service'),
-                        ],
-                      ),
-                    ),
-                  ],
+        actions: [
+          Consumer<FavoritesProvider>(
+            builder: (context, favoritesProvider, _) {
+              final isFav = favoritesProvider.isFavorite(service.id);
+              return IconButton(
+                icon: Icon(
+                  isFav ? Icons.favorite : Icons.favorite_border,
+                  color: isFav ? Colors.red : Colors.white,
                 ),
-              ]
-            : null,
+                onPressed: () {
+                  if (currentUser == null) {
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      const SnackBar(
+                        content: Text('Please log in to favorite'),
+                      ),
+                    );
+                    return;
+                  }
+                  final favorite = FavoriteModel(
+                    id: '',
+                    userId: currentUser.uid,
+                    itemId: service.id,
+                    itemType: 'service',
+                    itemTitle: service.name,
+                    createdAt: DateTime.now(),
+                  );
+                  favoritesProvider.toggleFavorite(favorite);
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    SnackBar(
+                      content: Text(
+                        isFav ? 'Removed from favorites' : 'Added to favorites',
+                      ),
+                      duration: const Duration(seconds: 1),
+                    ),
+                  );
+                },
+              );
+            },
+          ),
+          if (canModify)
+            PopupMenuButton<String>(
+              onSelected: (value) => _handleMenuAction(context, value),
+              itemBuilder: (context) => [
+                const PopupMenuItem(
+                  value: 'edit',
+                  child: Row(
+                    children: [
+                      Icon(Icons.edit, color: Colors.blue),
+                      SizedBox(width: 8),
+                      Text('Edit Service'),
+                    ],
+                  ),
+                ),
+                const PopupMenuItem(
+                  value: 'delete',
+                  child: Row(
+                    children: [
+                      Icon(Icons.delete, color: Colors.red),
+                      SizedBox(width: 8),
+                      Text('Delete Service'),
+                    ],
+                  ),
+                ),
+              ],
+            ),
+        ],
       ),
       body: SingleChildScrollView(
         child: Column(
@@ -86,10 +125,7 @@ class ServiceDetailScreen extends StatelessWidget {
           // Name
           Text(
             service.name,
-            style: const TextStyle(
-              fontSize: 24,
-              fontWeight: FontWeight.bold,
-            ),
+            style: const TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
           ),
           const SizedBox(height: 8),
           // Category chip
@@ -162,10 +198,7 @@ class ServiceDetailScreen extends StatelessWidget {
           const SizedBox(width: 4),
           Text(
             status,
-            style: TextStyle(
-              color: textColor,
-              fontWeight: FontWeight.w600,
-            ),
+            style: TextStyle(color: textColor, fontWeight: FontWeight.w600),
           ),
         ],
       ),
@@ -180,10 +213,7 @@ class ServiceDetailScreen extends StatelessWidget {
         children: [
           const Text(
             'Service Details',
-            style: TextStyle(
-              fontSize: 18,
-              fontWeight: FontWeight.bold,
-            ),
+            style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
           ),
           const SizedBox(height: 16),
           // Provider
@@ -232,10 +262,7 @@ class ServiceDetailScreen extends StatelessWidget {
             children: [
               Text(
                 label,
-                style: TextStyle(
-                  fontSize: 12,
-                  color: Colors.grey.shade600,
-                ),
+                style: TextStyle(fontSize: 12, color: Colors.grey.shade600),
               ),
               Text(
                 value,
@@ -259,10 +286,7 @@ class ServiceDetailScreen extends StatelessWidget {
         children: [
           const Text(
             'Description',
-            style: TextStyle(
-              fontSize: 18,
-              fontWeight: FontWeight.bold,
-            ),
+            style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
           ),
           const SizedBox(height: 12),
           Text(
@@ -306,7 +330,9 @@ class ServiceDetailScreen extends StatelessWidget {
               ? () => _bookService(context, currentUser)
               : () {
                   ScaffoldMessenger.of(context).showSnackBar(
-                    const SnackBar(content: Text('Please log in to book a service')),
+                    const SnackBar(
+                      content: Text('Please log in to book a service'),
+                    ),
                   );
                 },
           style: ElevatedButton.styleFrom(
@@ -324,10 +350,7 @@ class ServiceDetailScreen extends StatelessWidget {
               SizedBox(width: 8),
               Text(
                 'Book This Service',
-                style: TextStyle(
-                  fontSize: 18,
-                  fontWeight: FontWeight.bold,
-                ),
+                style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
               ),
             ],
           ),
@@ -369,11 +392,15 @@ class ServiceDetailScreen extends StatelessWidget {
             onPressed: () async {
               Navigator.pop(context); // Close dialog
               try {
-                await context.read<ServicesProvider>().deleteService(service.id);
+                await context.read<ServicesProvider>().deleteService(
+                  service.id,
+                );
                 if (context.mounted) {
                   Navigator.pop(context); // Return to services list
                   ScaffoldMessenger.of(context).showSnackBar(
-                    const SnackBar(content: Text('Service deleted successfully')),
+                    const SnackBar(
+                      content: Text('Service deleted successfully'),
+                    ),
                   );
                 }
               } catch (e) {
@@ -421,14 +448,14 @@ class ServiceDetailScreen extends StatelessWidget {
 
     try {
       await context.read<ServicesProvider>().bookService(
-            serviceId: service.id,
-            serviceName: service.name,
-            providerId: service.providerId,
-            clientId: currentUser.uid,
-            clientName: currentUser.name,
-            barangay: service.barangay,
-            rate: service.rate,
-          );
+        serviceId: service.id,
+        serviceName: service.name,
+        providerId: service.providerId,
+        clientId: currentUser.uid,
+        clientName: currentUser.name,
+        barangay: service.barangay,
+        rate: service.rate,
+      );
 
       if (context.mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
@@ -441,17 +468,27 @@ class ServiceDetailScreen extends StatelessWidget {
       }
     } catch (e) {
       if (context.mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Error booking service: $e')),
-        );
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(SnackBar(content: Text('Error booking service: $e')));
       }
     }
   }
 
   String _formatFullDate(DateTime date) {
     final months = [
-      'January', 'February', 'March', 'April', 'May', 'June',
-      'July', 'August', 'September', 'October', 'November', 'December'
+      'January',
+      'February',
+      'March',
+      'April',
+      'May',
+      'June',
+      'July',
+      'August',
+      'September',
+      'October',
+      'November',
+      'December',
     ];
     return '${months[date.month - 1]} ${date.day}, ${date.year}';
   }

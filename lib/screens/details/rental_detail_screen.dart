@@ -4,6 +4,8 @@ import '../../constants/app_constants.dart';
 import '../../models/rental.dart';
 import '../../providers/rentals_provider.dart';
 import '../../providers/user_provider.dart';
+import '../../providers/favorites_provider.dart';
+import '../../models/favorite.dart';
 import '../create/edit_rental_screen.dart';
 
 class RentalDetailScreen extends StatelessWidget {
@@ -24,45 +26,82 @@ class RentalDetailScreen extends StatelessWidget {
         title: const Text('Rental Details'),
         backgroundColor: kPrimaryColor,
         foregroundColor: Colors.white,
-        actions: canModify
-            ? [
-                PopupMenuButton<String>(
-                  onSelected: (value) => _handleMenuAction(context, value),
-                  itemBuilder: (context) => [
-                    const PopupMenuItem(
-                      value: 'edit',
-                      child: Row(
-                        children: [
-                          Icon(Icons.edit, color: Colors.blue),
-                          SizedBox(width: 8),
-                          Text('Edit Rental'),
-                        ],
-                      ),
-                    ),
-                    const PopupMenuItem(
-                      value: 'toggle_availability',
-                      child: Row(
-                        children: [
-                          Icon(Icons.swap_horiz, color: Colors.orange),
-                          SizedBox(width: 8),
-                          Text('Toggle Availability'),
-                        ],
-                      ),
-                    ),
-                    const PopupMenuItem(
-                      value: 'delete',
-                      child: Row(
-                        children: [
-                          Icon(Icons.delete, color: Colors.red),
-                          SizedBox(width: 8),
-                          Text('Delete Rental'),
-                        ],
-                      ),
-                    ),
-                  ],
+        actions: [
+          Consumer<FavoritesProvider>(
+            builder: (context, favoritesProvider, _) {
+              final isFav = favoritesProvider.isFavorite(rental.id);
+              return IconButton(
+                icon: Icon(
+                  isFav ? Icons.favorite : Icons.favorite_border,
+                  color: isFav ? Colors.red : Colors.white,
                 ),
-              ]
-            : null,
+                onPressed: () {
+                  if (currentUser == null) {
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      const SnackBar(
+                        content: Text('Please log in to favorite'),
+                      ),
+                    );
+                    return;
+                  }
+                  final favorite = FavoriteModel(
+                    id: '',
+                    userId: currentUser.uid,
+                    itemId: rental.id,
+                    itemType: 'rental',
+                    itemTitle: rental.itemName,
+                    createdAt: DateTime.now(),
+                  );
+                  favoritesProvider.toggleFavorite(favorite);
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    SnackBar(
+                      content: Text(
+                        isFav ? 'Removed from favorites' : 'Added to favorites',
+                      ),
+                      duration: const Duration(seconds: 1),
+                    ),
+                  );
+                },
+              );
+            },
+          ),
+          if (canModify)
+            PopupMenuButton<String>(
+              onSelected: (value) => _handleMenuAction(context, value),
+              itemBuilder: (context) => [
+                const PopupMenuItem(
+                  value: 'edit',
+                  child: Row(
+                    children: [
+                      Icon(Icons.edit, color: Colors.blue),
+                      SizedBox(width: 8),
+                      Text('Edit Rental'),
+                    ],
+                  ),
+                ),
+                const PopupMenuItem(
+                  value: 'toggle_availability',
+                  child: Row(
+                    children: [
+                      Icon(Icons.swap_horiz, color: Colors.orange),
+                      SizedBox(width: 8),
+                      Text('Toggle Availability'),
+                    ],
+                  ),
+                ),
+                const PopupMenuItem(
+                  value: 'delete',
+                  child: Row(
+                    children: [
+                      Icon(Icons.delete, color: Colors.red),
+                      SizedBox(width: 8),
+                      Text('Delete Rental'),
+                    ],
+                  ),
+                ),
+              ],
+            ),
+        ],
       ),
       body: SingleChildScrollView(
         child: Column(
@@ -102,10 +141,7 @@ class RentalDetailScreen extends StatelessWidget {
           // Name
           Text(
             rental.itemName,
-            style: const TextStyle(
-              fontSize: 24,
-              fontWeight: FontWeight.bold,
-            ),
+            style: const TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
           ),
           const SizedBox(height: 8),
           // Category chip
@@ -162,7 +198,9 @@ class RentalDetailScreen extends StatelessWidget {
           Text(
             isAvailable ? 'Available' : 'Rented',
             style: TextStyle(
-              color: isAvailable ? Colors.green.shade700 : Colors.orange.shade700,
+              color: isAvailable
+                  ? Colors.green.shade700
+                  : Colors.orange.shade700,
               fontWeight: FontWeight.w600,
             ),
           ),
@@ -211,10 +249,7 @@ class RentalDetailScreen extends StatelessWidget {
           const SizedBox(width: 4),
           Text(
             condition,
-            style: TextStyle(
-              color: textColor,
-              fontWeight: FontWeight.w600,
-            ),
+            style: TextStyle(color: textColor, fontWeight: FontWeight.w600),
           ),
         ],
       ),
@@ -229,10 +264,7 @@ class RentalDetailScreen extends StatelessWidget {
         children: [
           const Text(
             'Item Details',
-            style: TextStyle(
-              fontSize: 18,
-              fontWeight: FontWeight.bold,
-            ),
+            style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
           ),
           const SizedBox(height: 16),
           // Owner
@@ -281,10 +313,7 @@ class RentalDetailScreen extends StatelessWidget {
             children: [
               Text(
                 label,
-                style: TextStyle(
-                  fontSize: 12,
-                  color: Colors.grey.shade600,
-                ),
+                style: TextStyle(fontSize: 12, color: Colors.grey.shade600),
               ),
               Text(
                 value,
@@ -308,10 +337,7 @@ class RentalDetailScreen extends StatelessWidget {
         children: [
           const Text(
             'Description',
-            style: TextStyle(
-              fontSize: 18,
-              fontWeight: FontWeight.bold,
-            ),
+            style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
           ),
           const SizedBox(height: 12),
           Text(
@@ -355,7 +381,9 @@ class RentalDetailScreen extends StatelessWidget {
               ? () => _requestRental(context, currentUser)
               : () {
                   ScaffoldMessenger.of(context).showSnackBar(
-                    const SnackBar(content: Text('Please log in to rent this item')),
+                    const SnackBar(
+                      content: Text('Please log in to rent this item'),
+                    ),
                   );
                 },
           style: ElevatedButton.styleFrom(
@@ -373,10 +401,7 @@ class RentalDetailScreen extends StatelessWidget {
               SizedBox(width: 8),
               Text(
                 'Request to Rent',
-                style: TextStyle(
-                  fontSize: 18,
-                  fontWeight: FontWeight.bold,
-                ),
+                style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
               ),
             ],
           ),
@@ -406,10 +431,9 @@ class RentalDetailScreen extends StatelessWidget {
 
   void _toggleAvailability(BuildContext context) async {
     try {
-      await context.read<RentalsProvider>().updateRental(
-        rental.id,
-        {'isAvailable': !rental.isAvailable},
-      );
+      await context.read<RentalsProvider>().updateRental(rental.id, {
+        'isAvailable': !rental.isAvailable,
+      });
       if (context.mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
@@ -424,9 +448,9 @@ class RentalDetailScreen extends StatelessWidget {
       }
     } catch (e) {
       if (context.mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Error: $e')),
-        );
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(SnackBar(content: Text('Error: $e')));
       }
     }
   }
@@ -452,7 +476,9 @@ class RentalDetailScreen extends StatelessWidget {
                 if (context.mounted) {
                   Navigator.pop(context); // Return to rentals list
                   ScaffoldMessenger.of(context).showSnackBar(
-                    const SnackBar(content: Text('Rental deleted successfully')),
+                    const SnackBar(
+                      content: Text('Rental deleted successfully'),
+                    ),
                   );
                 }
               } catch (e) {
@@ -500,14 +526,14 @@ class RentalDetailScreen extends StatelessWidget {
 
     try {
       await context.read<RentalsProvider>().requestRental(
-            rentalId: rental.id,
-            itemName: rental.itemName,
-            ownerId: rental.ownerId,
-            renterId: currentUser.uid,
-            renterName: currentUser.name,
-            barangay: rental.barangay,
-            rentPrice: rental.rentPrice,
-          );
+        rentalId: rental.id,
+        itemName: rental.itemName,
+        ownerId: rental.ownerId,
+        renterId: currentUser.uid,
+        renterName: currentUser.name,
+        barangay: rental.barangay,
+        rentPrice: rental.rentPrice,
+      );
 
       if (context.mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
@@ -520,17 +546,27 @@ class RentalDetailScreen extends StatelessWidget {
       }
     } catch (e) {
       if (context.mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Error requesting rental: $e')),
-        );
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(SnackBar(content: Text('Error requesting rental: $e')));
       }
     }
   }
 
   String _formatFullDate(DateTime date) {
     final months = [
-      'January', 'February', 'March', 'April', 'May', 'June',
-      'July', 'August', 'September', 'October', 'November', 'December'
+      'January',
+      'February',
+      'March',
+      'April',
+      'May',
+      'June',
+      'July',
+      'August',
+      'September',
+      'October',
+      'November',
+      'December',
     ];
     return '${months[date.month - 1]} ${date.day}, ${date.year}';
   }

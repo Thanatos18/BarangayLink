@@ -107,4 +107,13 @@ class UserProvider extends ChangeNotifier {
       await fetchUserProfile(_currentUser!.uid);
     }
   }
+
+  Future<void> sendPasswordResetEmail() async {
+    if (_currentUser == null) return;
+    try {
+      await _authService.resetPassword(_currentUser!.email);
+    } catch (e) {
+      rethrow;
+    }
+  }
 }

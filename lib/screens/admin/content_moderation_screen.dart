@@ -5,6 +5,7 @@ import '../../models/report.dart';
 import '../../providers/admin_provider.dart';
 import '../../providers/user_provider.dart';
 import '../../widgets/custom_app_bar.dart';
+import 'report_detail_screen.dart';
 
 class ContentModerationScreen extends StatefulWidget {
   const ContentModerationScreen({super.key});
@@ -458,6 +459,12 @@ class _ContentModerationScreenState extends State<ContentModerationScreen> {
     if (action == 'delete') {
       final success = await provider.deleteReportedContent(report, adminUid);
       if (mounted) {
+        Navigator.push(
+          context,
+          MaterialPageRoute(
+            builder: (context) => ReportDetailScreen(report: report),
+          ),
+        );
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
             content: Text(

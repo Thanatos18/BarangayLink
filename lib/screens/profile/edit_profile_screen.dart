@@ -1,5 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import 'package:image_picker/image_picker.dart';
+import 'package:firebase_storage/firebase_storage.dart';
+import 'dart:io';
 import '../../constants/app_constants.dart';
 import '../../providers/user_provider.dart';
 import '../../services/firebase_service.dart';
@@ -20,8 +23,44 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
   late TextEditingController _contactController;
   late TextEditingController _bioController;
   String? _selectedBarangay;
+  File? _selectedImage; // To store the picked image
   bool _isLoading = false;
   bool _hasChanges = false;
+  final ImagePicker _picker = ImagePicker();
+
+  Future<void> _pickImage() async {
+    try {
+      final XFile? image = await _picker.pickImage(source: ImageSource.gallery);
+      if (image != null) {
+        setState(() {
+          _selectedImage = File(image.path);
+          _hasChanges = true;
+        });
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(SnackBar(content: Text('Error picking image: $e')));
+      }
+    }
+  }
+
+  Future<String?> _uploadImage(String userId) async {
+    if (_selectedImage == null) return null;
+
+    try {
+      final storageRef = FirebaseStorage.instance
+          .ref()
+          .child('user_profiles')
+          .child('$userId.jpg');
+
+      await storageRef.putFile(_selectedImage!);
+      return await storageRef.getDownloadURL();
+    } catch (e) {
+      throw Exception('Error uploading image: $e');
+    }
+  }
 
   @override
   void initState() {
@@ -219,10 +258,12 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
               CircleAvatar(
                 radius: 50,
                 backgroundColor: kPrimaryColor.withOpacity(0.1),
-                backgroundImage: user?.profileImageUrl != null
-                    ? NetworkImage(user!.profileImageUrl!)
+                backgroundImage: _selectedImage != null
+                    ? FileImage(_selectedImage!)
+                    : user?.profileImageUrl != null
+                    ? NetworkImage(user!.profileImageUrl!) as ImageProvider
                     : null,
-                child: user?.profileImageUrl == null
+                child: _selectedImage == null && user?.profileImageUrl == null
                     ? Text(
                         (user?.name ?? 'U')[0].toUpperCase(),
                         style: const TextStyle(
@@ -236,33 +277,27 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
               Positioned(
                 bottom: 0,
                 right: 0,
-                child: Container(
-                  padding: const EdgeInsets.all(8),
-                  decoration: BoxDecoration(
-                    color: kPrimaryColor,
-                    shape: BoxShape.circle,
-                    border: Border.all(color: Colors.white, width: 2),
-                  ),
-                  child: const Icon(
-                    Icons.camera_alt,
-                    color: Colors.white,
-                    size: 16,
+                child: GestureDetector(
+                  onTap: _pickImage,
+                  child: Container(
+                    padding: const EdgeInsets.all(8),
+                    decoration: BoxDecoration(
+                      color: kPrimaryColor,
+                      shape: BoxShape.circle,
+                      border: Border.all(color: Colors.white, width: 2),
+                    ),
+                    child: const Icon(
+                      Icons.camera_alt,
+                      color: Colors.white,
+                      size: 16,
+                    ),
                   ),
                 ),
               ),
             ],
           ),
           const SizedBox(height: 12),
-          TextButton(
-            onPressed: () {
-              ScaffoldMessenger.of(context).showSnackBar(
-                const SnackBar(
-                  content: Text('Photo upload coming in Phase 9!'),
-                ),
-              );
-            },
-            child: const Text('Change Photo'),
-          ),
+          TextButton(onPressed: _pickImage, child: const Text('Change Photo')),
         ],
       ),
     );
@@ -311,7 +346,24 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
 
       if (updateData.isNotEmpty) {
         await _firebaseService.updateUserProfile(user.uid, updateData);
+      }
 
+      // Handle Image Upload independently but part of the save process
+      if (_selectedImage != null) {
+        final imageUrl = await _uploadImage(user.uid);
+        if (imageUrl != null) {
+          updateData['profileImageUrl'] = imageUrl;
+          // We need to update again if image was uploaded, or do it all in one go.
+          // Since we already called update for text fields, let's just update the image now.
+          // To be safer and atomic, we should have gathered all data first.
+          // But since _uploadImage takes time, let's update it now.
+          await _firebaseService.updateUserProfile(user.uid, {
+            'profileImageUrl': imageUrl,
+          });
+        }
+      }
+
+      if (updateData.isNotEmpty || _selectedImage != null) {
         // Refresh user data
         await userProvider.refreshUser();
 

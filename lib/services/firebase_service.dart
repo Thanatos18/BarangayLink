@@ -45,6 +45,18 @@ class FirebaseService {
     }
   }
 
+  Future<JobModel?> getJob(String jobId) async {
+    try {
+      final doc = await _db.collection('barangay_jobs').doc(jobId).get();
+      if (doc.exists) {
+        return JobModel.fromMap(doc.data() as Map<String, dynamic>, doc.id);
+      }
+      return null;
+    } catch (e) {
+      throw Exception('Error getting job: $e');
+    }
+  }
+
   Stream<List<JobModel>> getJobsStream(String? barangayFilter) {
     Query query = _db
         .collection('barangay_jobs')
@@ -136,6 +148,21 @@ class FirebaseService {
     }
   }
 
+  Future<ServiceModel?> getService(String serviceId) async {
+    try {
+      final doc = await _db
+          .collection('barangay_services')
+          .doc(serviceId)
+          .get();
+      if (doc.exists) {
+        return ServiceModel.fromMap(doc.data() as Map<String, dynamic>, doc.id);
+      }
+      return null;
+    } catch (e) {
+      throw Exception('Error getting service: $e');
+    }
+  }
+
   Stream<List<ServiceModel>> getServicesStream(String? barangayFilter) {
     Query query = _db
         .collection('barangay_services')
@@ -214,6 +241,18 @@ class FirebaseService {
       await docRef.set(rental.toMap());
     } catch (e) {
       throw Exception('Error creating rental: $e');
+    }
+  }
+
+  Future<RentalModel?> getRental(String rentalId) async {
+    try {
+      final doc = await _db.collection('barangay_rentals').doc(rentalId).get();
+      if (doc.exists) {
+        return RentalModel.fromMap(doc.data() as Map<String, dynamic>, doc.id);
+      }
+      return null;
+    } catch (e) {
+      throw Exception('Error getting rental: $e');
     }
   }
 
@@ -721,52 +760,26 @@ class FirebaseService {
     }
   }
 
-  // --- FAVORITES METHODS (Phase 10) ---
+  // --- Favorites ---
 
-  /// Add item to favorites
-  Future<void> addFavorite({
-    required String userId,
-    required String itemId,
-    required String itemType,
-    required String itemTitle,
-  }) async {
+  /// Toggle Favorite
+  Future<void> toggleFavorite(FavoriteModel favorite) async {
     try {
-      // Check if already favorited
-      final existing = await _db
+      final querySnapshot = await _db
           .collection('barangay_favorites')
-          .where('userId', isEqualTo: userId)
-          .where('itemId', isEqualTo: itemId)
-          .limit(1)
+          .where('userId', isEqualTo: favorite.userId)
+          .where('itemId', isEqualTo: favorite.itemId)
           .get();
 
-      if (existing.docs.isNotEmpty) return; // Already favorited
-
-      await _db.collection('barangay_favorites').add({
-        'userId': userId,
-        'itemId': itemId,
-        'itemType': itemType,
-        'itemTitle': itemTitle,
-        'createdAt': Timestamp.now(),
-      });
-    } catch (e) {
-      throw Exception('Error adding favorite: $e');
-    }
-  }
-
-  /// Remove item from favorites
-  Future<void> removeFavorite(String userId, String itemId) async {
-    try {
-      final snapshot = await _db
-          .collection('barangay_favorites')
-          .where('userId', isEqualTo: userId)
-          .where('itemId', isEqualTo: itemId)
-          .get();
-
-      for (var doc in snapshot.docs) {
-        await doc.reference.delete();
+      if (querySnapshot.docs.isNotEmpty) {
+        // Already exists, remove it
+        await querySnapshot.docs.first.reference.delete();
+      } else {
+        // Doesn't exist, add it
+        await _db.collection('barangay_favorites').add(favorite.toMap());
       }
     } catch (e) {
-      throw Exception('Error removing favorite: $e');
+      throw Exception('Error toggling favorite: $e');
     }
   }
 

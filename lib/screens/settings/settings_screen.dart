@@ -152,12 +152,15 @@ class _SettingsScreenState extends State<SettingsScreen> {
   }
 
   void _showPasswordChangeDialog() {
+    final user = Provider.of<UserProvider>(context, listen: false).currentUser;
+    if (user == null) return;
+
     showDialog(
       context: context,
       builder: (context) => AlertDialog(
         title: const Text('Change Password'),
-        content: const Text(
-          'Password reset email will be sent to your registered email address.',
+        content: Text(
+          'A password reset link will be sent to ${user.email}. Are you sure?',
         ),
         actions: [
           TextButton(
@@ -165,11 +168,36 @@ class _SettingsScreenState extends State<SettingsScreen> {
             child: const Text('Cancel'),
           ),
           ElevatedButton(
-            onPressed: () {
+            onPressed: () async {
               Navigator.pop(context);
-              ScaffoldMessenger.of(context).showSnackBar(
-                const SnackBar(content: Text('Password reset email sent')),
-              );
+              try {
+                // Initialize AuthService directly since it's a stateless service wrapper
+                // or retrieve if provided. For now, creating instance as per other files.
+                // However, cleaner to import it.
+                // We need to import AuthService at the top.
+                // Assuming we will add the import.
+                await Provider.of<UserProvider>(
+                  context,
+                  listen: false,
+                ).sendPasswordResetEmail();
+                if (mounted) {
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    const SnackBar(
+                      content: Text('Password reset email sent successfully'),
+                      backgroundColor: Colors.green,
+                    ),
+                  );
+                }
+              } catch (e) {
+                if (mounted) {
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    SnackBar(
+                      content: Text('Failed to send email: $e'),
+                      backgroundColor: Colors.red,
+                    ),
+                  );
+                }
+              }
             },
             child: const Text('Send Email'),
           ),
