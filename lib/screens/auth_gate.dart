@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
-import 'package:flutter_application_1/screens/auth/login_screen.dart'; // Relative import
-import 'package:flutter_application_1/screens/main/main_app_screen.dart'; // Relative import to the new Main App wrapper
+import 'auth/login_screen.dart'; // Relative import
+import 'main/main_app_screen.dart'; // Relative import to the new Main App wrapper
 
 class AuthGate extends StatelessWidget {
   const AuthGate({super.key});

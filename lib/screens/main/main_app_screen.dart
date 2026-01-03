@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
-import 'package:flutter_application_1/screens/home/home_screen.dart';
+import '../home/home_screen.dart';
 import '../../constants/app_constants.dart';
 import '../../providers/notification_provider.dart';
 import '../../providers/user_provider.dart';

@@ -3,7 +3,7 @@ import 'package:provider/provider.dart';
 import '../../providers/favorites_provider.dart';
 import '../../providers/user_provider.dart';
 import '../../models/favorite.dart';
-import 'package:flutter_application_1/services/firebase_service.dart';
+import '../../services/firebase_service.dart';
 import '../../widgets/custom_app_bar.dart';
 import '../details/job_detail_screen.dart';
 import '../details/service_detail_screen.dart';

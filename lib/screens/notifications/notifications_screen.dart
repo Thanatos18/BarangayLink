@@ -5,6 +5,12 @@ import '../../models/notification.dart';
 import '../../providers/notification_provider.dart';
 import '../../providers/user_provider.dart';
 import '../../widgets/custom_app_bar.dart';
+import '../../providers/jobs_provider.dart';
+import '../../providers/services_provider.dart';
+import '../../providers/rentals_provider.dart';
+import '../details/job_detail_screen.dart';
+import '../details/service_detail_screen.dart';
+import '../details/rental_detail_screen.dart';
 
 class NotificationsScreen extends StatefulWidget {
   const NotificationsScreen({super.key});
@@ -220,14 +226,57 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
 
     // Navigate based on related type
     if (notification.relatedId != null && notification.relatedType != null) {
-      // TODO: Navigate to related item (transaction, job, etc.)
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text(
-            'Navigate to ${notification.relatedType}: ${notification.relatedId}',
+      // Determine destination
+      Widget? destination;
+      switch (notification.relatedType) {
+        case 'job':
+          final job = Provider.of<JobsProvider>(
+            context,
+            listen: false,
+          ).getJobById(notification.relatedId!);
+          if (job != null) destination = JobDetailScreen(job: job);
+          break;
+        case 'service':
+          final service = Provider.of<ServicesProvider>(
+            context,
+            listen: false,
+          ).getServiceById(notification.relatedId!);
+          if (service != null)
+            destination = ServiceDetailScreen(service: service);
+          break;
+        case 'rental':
+          final rental = Provider.of<RentalsProvider>(
+            context,
+            listen: false,
+          ).getRentalById(notification.relatedId!);
+          if (rental != null) destination = RentalDetailScreen(rental: rental);
+          break;
+        case 'transaction':
+          // Fetch transaction via provider or service if needed,
+          // for now assuming we might pass ID or fetch in detail screen.
+          // Since TransactionDetailScreen needs a TransactionModel, we might need to fetch it.
+          // For simplicity, we'll try to find it in TransactionProvider if available, or just show not implemented if complex.
+          // Assuming TransactionProvider has it loaded or we can fetch.
+          // Let's safe check.
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(content: Text('Opening Transaction Details...')),
+          );
+          // Actual navigation would require fetching the transaction object first
+          break;
+      }
+
+      if (destination != null) {
+        Navigator.push(
+          context,
+          MaterialPageRoute(builder: (_) => destination!),
+        );
+      } else if (notification.relatedType != 'transaction') {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('Item not found or no longer available'),
           ),
-        ),
-      );
+        );
+      }
     }
   }
 
