@@ -28,7 +28,10 @@ class _ServicesScreenState extends State<ServicesScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: const CustomAppBar(title: 'Barangay Services'),
+      appBar: const CustomAppBar(
+        title: 'Barangay Services',
+        showNotificationButton: true,
+      ),
       body: Column(
         children: [
           // Search Bar
@@ -45,7 +48,11 @@ class _ServicesScreenState extends State<ServicesScreen> {
         onPressed: () => _navigateToCreateService(context),
         backgroundColor: kPrimaryColor,
         icon: const Icon(Icons.add, color: Colors.white),
-        label: const Text('Offer Service', style: TextStyle(color: Colors.white)),
+        heroTag: 'services_fab', // Unique tag for IndexedStack
+        label: const Text(
+          'Offer Service',
+          style: TextStyle(color: Colors.white),
+        ),
       ),
     );
   }
@@ -77,7 +84,8 @@ class _ServicesScreenState extends State<ServicesScreen> {
 
   Widget _buildFilterToggle() {
     final servicesProvider = context.watch<ServicesProvider>();
-    final hasActiveFilters = servicesProvider.selectedBarangay != null ||
+    final hasActiveFilters =
+        servicesProvider.selectedBarangay != null ||
         servicesProvider.selectedCategory != null ||
         servicesProvider.showAvailableOnly == true;
 
@@ -147,13 +155,18 @@ class _ServicesScreenState extends State<ServicesScreen> {
           // Availability Filter
           Row(
             children: [
-              const Text('Show: ', style: TextStyle(fontWeight: FontWeight.bold)),
+              const Text(
+                'Show: ',
+                style: TextStyle(fontWeight: FontWeight.bold),
+              ),
               const SizedBox(width: 8),
               FilterChip(
                 label: const Text('Available Only'),
                 selected: servicesProvider.showAvailableOnly == true,
                 onSelected: (selected) {
-                  servicesProvider.setAvailabilityFilter(selected ? true : null);
+                  servicesProvider.setAvailabilityFilter(
+                    selected ? true : null,
+                  );
                 },
                 selectedColor: kPrimaryColor.withValues(alpha: 0.3),
                 checkmarkColor: kPrimaryColor,
@@ -164,13 +177,19 @@ class _ServicesScreenState extends State<ServicesScreen> {
           // Category Dropdown
           Row(
             children: [
-              const Text('Category: ', style: TextStyle(fontWeight: FontWeight.bold)),
+              const Text(
+                'Category: ',
+                style: TextStyle(fontWeight: FontWeight.bold),
+              ),
               const SizedBox(width: 8),
               Expanded(
                 child: DropdownButtonFormField<String>(
                   value: servicesProvider.selectedCategory,
                   decoration: const InputDecoration(
-                    contentPadding: EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                    contentPadding: EdgeInsets.symmetric(
+                      horizontal: 12,
+                      vertical: 8,
+                    ),
                     isDense: true,
                   ),
                   hint: const Text('All Categories'),
@@ -198,13 +217,19 @@ class _ServicesScreenState extends State<ServicesScreen> {
           // Barangay Dropdown
           Row(
             children: [
-              const Text('Barangay: ', style: TextStyle(fontWeight: FontWeight.bold)),
+              const Text(
+                'Barangay: ',
+                style: TextStyle(fontWeight: FontWeight.bold),
+              ),
               const SizedBox(width: 8),
               Expanded(
                 child: DropdownButtonFormField<String>(
                   value: servicesProvider.selectedBarangay,
                   decoration: const InputDecoration(
-                    contentPadding: EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                    contentPadding: EdgeInsets.symmetric(
+                      horizontal: 12,
+                      vertical: 8,
+                    ),
                     isDense: true,
                   ),
                   hint: const Text('All Tagum City'),
@@ -236,7 +261,8 @@ class _ServicesScreenState extends State<ServicesScreen> {
   Widget _buildServicesList() {
     final servicesProvider = context.watch<ServicesProvider>();
 
-    if (servicesProvider.isLoading && servicesProvider.filteredServices.isEmpty) {
+    if (servicesProvider.isLoading &&
+        servicesProvider.filteredServices.isEmpty) {
       return const Center(child: CircularProgressIndicator());
     }
 
@@ -265,7 +291,11 @@ class _ServicesScreenState extends State<ServicesScreen> {
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            Icon(Icons.home_repair_service_outlined, size: 64, color: Colors.grey.shade400),
+            Icon(
+              Icons.home_repair_service_outlined,
+              size: 64,
+              color: Colors.grey.shade400,
+            ),
             const SizedBox(height: 16),
             Text(
               'No services found',
@@ -376,12 +406,19 @@ class _ServicesScreenState extends State<ServicesScreen> {
                   ),
                   const Spacer(),
                   // Barangay
-                  Icon(Icons.location_on, size: 16, color: Colors.grey.shade500),
+                  Icon(
+                    Icons.location_on,
+                    size: 16,
+                    color: Colors.grey.shade500,
+                  ),
                   const SizedBox(width: 4),
                   Flexible(
                     child: Text(
                       service.barangay,
-                      style: TextStyle(color: Colors.grey.shade600, fontSize: 12),
+                      style: TextStyle(
+                        color: Colors.grey.shade600,
+                        fontSize: 12,
+                      ),
                       overflow: TextOverflow.ellipsis,
                     ),
                   ),
@@ -448,9 +485,7 @@ class _ServicesScreenState extends State<ServicesScreen> {
     }
     Navigator.push(
       context,
-      MaterialPageRoute(
-        builder: (context) => const CreateServiceScreen(),
-      ),
+      MaterialPageRoute(builder: (context) => const CreateServiceScreen()),
     );
   }
 }

@@ -28,7 +28,10 @@ class _RentalsScreenState extends State<RentalsScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: const CustomAppBar(title: 'Rentals'),
+      appBar: const CustomAppBar(
+        title: 'Rentals',
+        showNotificationButton: true,
+      ),
       body: Column(
         children: [
           // Search Bar
@@ -45,6 +48,7 @@ class _RentalsScreenState extends State<RentalsScreen> {
         onPressed: () => _navigateToCreateRental(context),
         backgroundColor: kPrimaryColor,
         icon: const Icon(Icons.add, color: Colors.white),
+        heroTag: 'rentals_fab', // Unique tag for IndexedStack
         label: const Text('List Item', style: TextStyle(color: Colors.white)),
       ),
     );
@@ -77,7 +81,8 @@ class _RentalsScreenState extends State<RentalsScreen> {
 
   Widget _buildFilterToggle() {
     final rentalsProvider = context.watch<RentalsProvider>();
-    final hasActiveFilters = rentalsProvider.selectedBarangay != null ||
+    final hasActiveFilters =
+        rentalsProvider.selectedBarangay != null ||
         rentalsProvider.selectedCategory != null ||
         rentalsProvider.showAvailableOnly == true ||
         rentalsProvider.selectedCondition != null;
@@ -148,7 +153,10 @@ class _RentalsScreenState extends State<RentalsScreen> {
           // Availability Filter
           Row(
             children: [
-              const Text('Show: ', style: TextStyle(fontWeight: FontWeight.bold)),
+              const Text(
+                'Show: ',
+                style: TextStyle(fontWeight: FontWeight.bold),
+              ),
               const SizedBox(width: 8),
               FilterChip(
                 label: const Text('Available Only'),
@@ -165,13 +173,19 @@ class _RentalsScreenState extends State<RentalsScreen> {
           // Category Dropdown
           Row(
             children: [
-              const Text('Category: ', style: TextStyle(fontWeight: FontWeight.bold)),
+              const Text(
+                'Category: ',
+                style: TextStyle(fontWeight: FontWeight.bold),
+              ),
               const SizedBox(width: 8),
               Expanded(
                 child: DropdownButtonFormField<String>(
                   value: rentalsProvider.selectedCategory,
                   decoration: const InputDecoration(
-                    contentPadding: EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                    contentPadding: EdgeInsets.symmetric(
+                      horizontal: 12,
+                      vertical: 8,
+                    ),
                     isDense: true,
                   ),
                   hint: const Text('All Categories'),
@@ -199,13 +213,19 @@ class _RentalsScreenState extends State<RentalsScreen> {
           // Condition Dropdown
           Row(
             children: [
-              const Text('Condition: ', style: TextStyle(fontWeight: FontWeight.bold)),
+              const Text(
+                'Condition: ',
+                style: TextStyle(fontWeight: FontWeight.bold),
+              ),
               const SizedBox(width: 8),
               Expanded(
                 child: DropdownButtonFormField<String>(
                   value: rentalsProvider.selectedCondition,
                   decoration: const InputDecoration(
-                    contentPadding: EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                    contentPadding: EdgeInsets.symmetric(
+                      horizontal: 12,
+                      vertical: 8,
+                    ),
                     isDense: true,
                   ),
                   hint: const Text('Any Condition'),
@@ -233,13 +253,19 @@ class _RentalsScreenState extends State<RentalsScreen> {
           // Barangay Dropdown
           Row(
             children: [
-              const Text('Barangay: ', style: TextStyle(fontWeight: FontWeight.bold)),
+              const Text(
+                'Barangay: ',
+                style: TextStyle(fontWeight: FontWeight.bold),
+              ),
               const SizedBox(width: 8),
               Expanded(
                 child: DropdownButtonFormField<String>(
                   value: rentalsProvider.selectedBarangay,
                   decoration: const InputDecoration(
-                    contentPadding: EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                    contentPadding: EdgeInsets.symmetric(
+                      horizontal: 12,
+                      vertical: 8,
+                    ),
                     isDense: true,
                   ),
                   hint: const Text('All Tagum City'),
@@ -300,7 +326,11 @@ class _RentalsScreenState extends State<RentalsScreen> {
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            Icon(Icons.inventory_2_outlined, size: 64, color: Colors.grey.shade400),
+            Icon(
+              Icons.inventory_2_outlined,
+              size: 64,
+              color: Colors.grey.shade400,
+            ),
             const SizedBox(height: 16),
             Text(
               'No rentals found',
@@ -402,12 +432,19 @@ class _RentalsScreenState extends State<RentalsScreen> {
                   ),
                   const Spacer(),
                   // Barangay
-                  Icon(Icons.location_on, size: 16, color: Colors.grey.shade500),
+                  Icon(
+                    Icons.location_on,
+                    size: 16,
+                    color: Colors.grey.shade500,
+                  ),
                   const SizedBox(width: 4),
                   Flexible(
                     child: Text(
                       rental.barangay,
-                      style: TextStyle(color: Colors.grey.shade600, fontSize: 12),
+                      style: TextStyle(
+                        color: Colors.grey.shade600,
+                        fontSize: 12,
+                      ),
                       overflow: TextOverflow.ellipsis,
                     ),
                   ),
@@ -496,9 +533,7 @@ class _RentalsScreenState extends State<RentalsScreen> {
     }
     Navigator.push(
       context,
-      MaterialPageRoute(
-        builder: (context) => const CreateRentalScreen(),
-      ),
+      MaterialPageRoute(builder: (context) => const CreateRentalScreen()),
     );
   }
 }

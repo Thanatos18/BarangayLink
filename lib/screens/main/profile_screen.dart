@@ -56,6 +56,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
     return Scaffold(
       appBar: CustomAppBar(
         title: 'My Profile',
+        showNotificationButton: true,
         actions: [
           IconButton(
             icon: const Icon(Icons.edit),

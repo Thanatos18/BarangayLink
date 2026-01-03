@@ -29,6 +29,7 @@ class HomeScreen extends StatelessWidget {
     return Scaffold(
       appBar: CustomAppBar(
         title: 'BarangayLink',
+        showNotificationButton: true,
         leading: const Padding(
           padding: EdgeInsets.all(8.0),
           child: CircleAvatar(
@@ -36,12 +37,6 @@ class HomeScreen extends StatelessWidget {
             backgroundColor: Colors.white, // Fallback/margin color
           ),
         ),
-        actions: [
-          IconButton(
-            icon: const Icon(Icons.notifications_outlined),
-            onPressed: () {},
-          ),
-        ],
       ),
       body: SingleChildScrollView(
         child: Column(

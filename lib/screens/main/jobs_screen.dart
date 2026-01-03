@@ -28,7 +28,10 @@ class _JobsScreenState extends State<JobsScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: const CustomAppBar(title: 'Barangay Jobs'),
+      appBar: const CustomAppBar(
+        title: 'Barangay Jobs',
+        showNotificationButton: true,
+      ),
       body: Column(
         children: [
           // Search Bar
@@ -45,6 +48,7 @@ class _JobsScreenState extends State<JobsScreen> {
         onPressed: () => _navigateToCreateJob(context),
         backgroundColor: kPrimaryColor,
         icon: const Icon(Icons.add, color: Colors.white),
+        heroTag: 'jobs_fab', // Unique tag for IndexedStack
         label: const Text('Post Job', style: TextStyle(color: Colors.white)),
       ),
     );
@@ -77,7 +81,8 @@ class _JobsScreenState extends State<JobsScreen> {
 
   Widget _buildFilterToggle() {
     final jobsProvider = context.watch<JobsProvider>();
-    final hasActiveFilters = jobsProvider.selectedBarangay != null ||
+    final hasActiveFilters =
+        jobsProvider.selectedBarangay != null ||
         jobsProvider.selectedCategory != null ||
         jobsProvider.selectedStatus != null;
 
@@ -149,7 +154,10 @@ class _JobsScreenState extends State<JobsScreen> {
             spacing: 8,
             runSpacing: 8,
             children: [
-              const Text('Status: ', style: TextStyle(fontWeight: FontWeight.bold)),
+              const Text(
+                'Status: ',
+                style: TextStyle(fontWeight: FontWeight.bold),
+              ),
               ...JobsProvider.jobStatuses.map((status) {
                 final isSelected = jobsProvider.selectedStatus == status;
                 return FilterChip(
@@ -168,13 +176,19 @@ class _JobsScreenState extends State<JobsScreen> {
           // Category Dropdown
           Row(
             children: [
-              const Text('Category: ', style: TextStyle(fontWeight: FontWeight.bold)),
+              const Text(
+                'Category: ',
+                style: TextStyle(fontWeight: FontWeight.bold),
+              ),
               const SizedBox(width: 8),
               Expanded(
                 child: DropdownButtonFormField<String>(
                   value: jobsProvider.selectedCategory,
                   decoration: const InputDecoration(
-                    contentPadding: EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                    contentPadding: EdgeInsets.symmetric(
+                      horizontal: 12,
+                      vertical: 8,
+                    ),
                     isDense: true,
                   ),
                   hint: const Text('All Categories'),
@@ -202,13 +216,19 @@ class _JobsScreenState extends State<JobsScreen> {
           // Barangay Dropdown
           Row(
             children: [
-              const Text('Barangay: ', style: TextStyle(fontWeight: FontWeight.bold)),
+              const Text(
+                'Barangay: ',
+                style: TextStyle(fontWeight: FontWeight.bold),
+              ),
               const SizedBox(width: 8),
               Expanded(
                 child: DropdownButtonFormField<String>(
                   value: jobsProvider.selectedBarangay,
                   decoration: const InputDecoration(
-                    contentPadding: EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                    contentPadding: EdgeInsets.symmetric(
+                      horizontal: 12,
+                      vertical: 8,
+                    ),
                     isDense: true,
                   ),
                   hint: const Text('All Tagum City'),
@@ -367,18 +387,29 @@ class _JobsScreenState extends State<JobsScreen> {
                   ),
                   const Spacer(),
                   // Barangay
-                  Icon(Icons.location_on, size: 16, color: Colors.grey.shade500),
+                  Icon(
+                    Icons.location_on,
+                    size: 16,
+                    color: Colors.grey.shade500,
+                  ),
                   const SizedBox(width: 4),
                   Flexible(
                     child: Text(
                       job.barangay,
-                      style: TextStyle(color: Colors.grey.shade600, fontSize: 12),
+                      style: TextStyle(
+                        color: Colors.grey.shade600,
+                        fontSize: 12,
+                      ),
                       overflow: TextOverflow.ellipsis,
                     ),
                   ),
                   const SizedBox(width: 12),
                   // Date
-                  Icon(Icons.access_time, size: 16, color: Colors.grey.shade500),
+                  Icon(
+                    Icons.access_time,
+                    size: 16,
+                    color: Colors.grey.shade500,
+                  ),
                   const SizedBox(width: 4),
                   Text(
                     _formatDate(job.createdAt),
@@ -395,7 +426,10 @@ class _JobsScreenState extends State<JobsScreen> {
                     const SizedBox(width: 4),
                     Text(
                       '${job.applicants.length} applicant${job.applicants.length > 1 ? 's' : ''}',
-                      style: TextStyle(color: Colors.blue.shade400, fontSize: 12),
+                      style: TextStyle(
+                        color: Colors.blue.shade400,
+                        fontSize: 12,
+                      ),
                     ),
                   ],
                 ),
@@ -467,9 +501,7 @@ class _JobsScreenState extends State<JobsScreen> {
   void _navigateToJobDetail(BuildContext context, JobModel job) {
     Navigator.push(
       context,
-      MaterialPageRoute(
-        builder: (context) => JobDetailScreen(job: job),
-      ),
+      MaterialPageRoute(builder: (context) => JobDetailScreen(job: job)),
     );
   }
 
@@ -483,9 +515,7 @@ class _JobsScreenState extends State<JobsScreen> {
     }
     Navigator.push(
       context,
-      MaterialPageRoute(
-        builder: (context) => const CreateJobScreen(),
-      ),
+      MaterialPageRoute(builder: (context) => const CreateJobScreen()),
     );
   }
 }
