@@ -20,7 +20,10 @@ class _SettingsScreenState extends State<SettingsScreen> {
     final userProvider = Provider.of<UserProvider>(context);
 
     return Scaffold(
-      appBar: const CustomAppBar(title: 'Settings'),
+      appBar: const CustomAppBar(
+        title: 'Settings',
+        showBackButton: true,
+      ),
       body: ListView(
         padding: const EdgeInsets.all(16),
         children: [

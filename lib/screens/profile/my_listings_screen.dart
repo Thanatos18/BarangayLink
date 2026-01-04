@@ -45,6 +45,7 @@ class _MyListingsScreenState extends State<MyListingsScreen>
     return Scaffold(
       appBar: CustomAppBar(
         title: 'My Listings',
+        showBackButton: true,
         bottom: TabBar(
           controller: _tabController,
           labelColor: Colors.white,
@@ -71,9 +72,8 @@ class _MyListingsScreenState extends State<MyListingsScreen>
   Widget _buildJobsList(String userId) {
     return Consumer<JobsProvider>(
       builder: (context, provider, _) {
-        final myJobs = provider.allJobs
-            .where((job) => job.postedBy == userId)
-            .toList();
+        final myJobs =
+            provider.allJobs.where((job) => job.postedBy == userId).toList();
 
         if (myJobs.isEmpty) {
           return _buildEmptyState('No jobs posted yet');
@@ -118,9 +118,8 @@ class _MyListingsScreenState extends State<MyListingsScreen>
   Widget _buildServicesList(String userId) {
     return Consumer<ServicesProvider>(
       builder: (context, provider, _) {
-        final myServices = provider.allServices
-            .where((s) => s.providerId == userId)
-            .toList();
+        final myServices =
+            provider.allServices.where((s) => s.providerId == userId).toList();
 
         if (myServices.isEmpty) {
           return _buildEmptyState('No services offered yet');
@@ -165,9 +164,8 @@ class _MyListingsScreenState extends State<MyListingsScreen>
   Widget _buildRentalsList(String userId) {
     return Consumer<RentalsProvider>(
       builder: (context, provider, _) {
-        final myRentals = provider.allRentals
-            .where((r) => r.ownerId == userId)
-            .toList();
+        final myRentals =
+            provider.allRentals.where((r) => r.ownerId == userId).toList();
 
         if (myRentals.isEmpty) {
           return _buildEmptyState('No items listed for rent');
@@ -191,9 +189,8 @@ class _MyListingsScreenState extends State<MyListingsScreen>
                     rental.isAvailable ? 'Available' : 'Rented',
                     style: const TextStyle(color: Colors.white, fontSize: 12),
                   ),
-                  backgroundColor: rental.isAvailable
-                      ? Colors.green
-                      : Colors.orange,
+                  backgroundColor:
+                      rental.isAvailable ? Colors.green : Colors.orange,
                 ),
                 onTap: () {
                   Navigator.push(

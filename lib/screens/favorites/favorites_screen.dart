@@ -45,6 +45,7 @@ class _FavoritesScreenState extends State<FavoritesScreen>
     return Scaffold(
       appBar: CustomAppBar(
         title: 'My Favorites',
+        showBackButton: true,
         bottom: TabBar(
           controller: _tabController,
           labelColor: Colors.white,

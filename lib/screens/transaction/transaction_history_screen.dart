@@ -11,7 +11,8 @@ class TransactionHistoryScreen extends StatefulWidget {
   const TransactionHistoryScreen({super.key});
 
   @override
-  State<TransactionHistoryScreen> createState() => _TransactionHistoryScreenState();
+  State<TransactionHistoryScreen> createState() =>
+      _TransactionHistoryScreenState();
 }
 
 class _TransactionHistoryScreenState extends State<TransactionHistoryScreen> {
@@ -40,13 +41,19 @@ class _TransactionHistoryScreenState extends State<TransactionHistoryScreen> {
 
     if (currentUser == null) {
       return const Scaffold(
-        appBar: CustomAppBar(title: 'Transaction History'),
+        appBar: CustomAppBar(
+          title: 'Transaction History',
+          showBackButton: true,
+        ),
         body: Center(child: Text('Please log in to view transactions')),
       );
     }
 
     return Scaffold(
-      appBar: const CustomAppBar(title: 'Transaction History'),
+      appBar: const CustomAppBar(
+        title: 'Transaction History',
+        showBackButton: true,
+      ),
       body: Column(
         children: [
           // Filter Section
@@ -83,7 +90,8 @@ class _TransactionHistoryScreenState extends State<TransactionHistoryScreen> {
               value: provider.selectedTypeFilter ?? '',
               decoration: const InputDecoration(
                 labelText: 'Type',
-                contentPadding: EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                contentPadding:
+                    EdgeInsets.symmetric(horizontal: 12, vertical: 8),
                 isDense: true,
               ),
               items: TransactionProvider.typeOptions.map((option) {
@@ -105,7 +113,8 @@ class _TransactionHistoryScreenState extends State<TransactionHistoryScreen> {
               value: provider.selectedStatusFilter ?? '',
               decoration: const InputDecoration(
                 labelText: 'Status',
-                contentPadding: EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                contentPadding:
+                    EdgeInsets.symmetric(horizontal: 12, vertical: 8),
                 isDense: true,
               ),
               items: TransactionProvider.statusOptions.map((option) {
@@ -125,7 +134,8 @@ class _TransactionHistoryScreenState extends State<TransactionHistoryScreen> {
     );
   }
 
-  Widget _buildTransactionList(TransactionProvider provider, String currentUserId) {
+  Widget _buildTransactionList(
+      TransactionProvider provider, String currentUserId) {
     if (provider.isLoading) {
       return const Center(child: CircularProgressIndicator());
     }
@@ -194,7 +204,8 @@ class _TransactionHistoryScreenState extends State<TransactionHistoryScreen> {
     );
   }
 
-  Widget _buildTransactionCard(TransactionModel transaction, String currentUserId) {
+  Widget _buildTransactionCard(
+      TransactionModel transaction, String currentUserId) {
     final isInitiator = transaction.initiatedBy == currentUserId;
     final otherPartyName = isInitiator
         ? (transaction.targetUserName ?? 'Loading...')
@@ -209,7 +220,8 @@ class _TransactionHistoryScreenState extends State<TransactionHistoryScreen> {
           Navigator.push(
             context,
             MaterialPageRoute(
-              builder: (context) => TransactionDetailScreen(transaction: transaction),
+              builder: (context) =>
+                  TransactionDetailScreen(transaction: transaction),
             ),
           );
         },

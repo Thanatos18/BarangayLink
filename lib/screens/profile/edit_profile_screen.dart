@@ -96,7 +96,10 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: const CustomAppBar(title: 'Edit Profile'),
+      appBar: const CustomAppBar(
+        title: 'Edit Profile',
+        showBackButton: true,
+      ),
       body: SingleChildScrollView(
         padding: const EdgeInsets.all(16),
         child: Form(
@@ -261,8 +264,8 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
                 backgroundImage: _selectedImage != null
                     ? FileImage(_selectedImage!)
                     : user?.profileImageUrl != null
-                    ? NetworkImage(user!.profileImageUrl!) as ImageProvider
-                    : null,
+                        ? NetworkImage(user!.profileImageUrl!) as ImageProvider
+                        : null,
                 child: _selectedImage == null && user?.profileImageUrl == null
                     ? Text(
                         (user?.name ?? 'U')[0].toUpperCase(),

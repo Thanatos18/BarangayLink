@@ -44,6 +44,7 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
     return Scaffold(
       appBar: CustomAppBar(
         title: 'Notifications',
+        showBackButton: true,
         actions: [
           if (notificationProvider.hasUnread)
             TextButton(

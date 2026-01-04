@@ -98,7 +98,10 @@ class _SearchScreenState extends State<SearchScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: const CustomAppBar(title: 'Search'),
+      appBar: const CustomAppBar(
+        title: 'Search',
+        showBackButton: true,
+      ),
       body: Column(
         children: [
           // Search Bar
@@ -270,9 +273,9 @@ class _SearchScreenState extends State<SearchScreen> {
         icon = Icons.work;
         color = Colors.blue;
         onTap = () => Navigator.push(
-          context,
-          MaterialPageRoute(builder: (_) => JobDetailScreen(job: job)),
-        );
+              context,
+              MaterialPageRoute(builder: (_) => JobDetailScreen(job: job)),
+            );
         break;
       case 'service':
         final service = item as ServiceModel;
@@ -282,11 +285,11 @@ class _SearchScreenState extends State<SearchScreen> {
         icon = Icons.build;
         color = Colors.orange;
         onTap = () => Navigator.push(
-          context,
-          MaterialPageRoute(
-            builder: (_) => ServiceDetailScreen(service: service),
-          ),
-        );
+              context,
+              MaterialPageRoute(
+                builder: (_) => ServiceDetailScreen(service: service),
+              ),
+            );
         break;
       case 'rental':
         final rental = item as RentalModel;
@@ -296,9 +299,10 @@ class _SearchScreenState extends State<SearchScreen> {
         icon = Icons.handyman;
         color = Colors.purple;
         onTap = () => Navigator.push(
-          context,
-          MaterialPageRoute(builder: (_) => RentalDetailScreen(rental: rental)),
-        );
+              context,
+              MaterialPageRoute(
+                  builder: (_) => RentalDetailScreen(rental: rental)),
+            );
         break;
       default:
         return const SizedBox.shrink();
