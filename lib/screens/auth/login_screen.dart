@@ -89,29 +89,24 @@ class _LoginScreenState extends State<LoginScreen> {
                     crossAxisAlignment: CrossAxisAlignment.stretch,
                     children: [
                       // Logo or Icon
-                      const Icon(
-                        Icons.location_city,
-                        size: 64,
-                        color: Colors.green,
-                      ), // Fallback if logo fails
-                      // If you have a logo, uncomment:
-                      // Image.asset('assets/logo.png', height: 80),
+                      // Logo
+                      Image.asset('assets/logo3.png', height: 100),
                       const SizedBox(height: 24.0),
                       Text(
                         'Welcome to\nBarangayLink',
-                        style: Theme.of(context).textTheme.headlineSmall
-                            ?.copyWith(
-                              fontWeight: FontWeight.bold,
-                              color: Theme.of(context).colorScheme.primary,
-                            ),
+                        style:
+                            Theme.of(context).textTheme.headlineSmall?.copyWith(
+                                  fontWeight: FontWeight.bold,
+                                  color: Theme.of(context).colorScheme.primary,
+                                ),
                         textAlign: TextAlign.center,
                       ),
                       const SizedBox(height: 8.0),
                       Text(
                         'Connect with your community',
                         style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                          color: Colors.grey[600],
-                        ),
+                              color: Colors.grey[600],
+                            ),
                         textAlign: TextAlign.center,
                       ),
                       const SizedBox(height: 32.0),
