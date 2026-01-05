@@ -1,10 +1,16 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:google_fonts/google_fonts.dart';
-import '../../constants/app_constants.dart'; // Relative import
-import '../../providers/user_provider.dart'; // Relative import
-import '../../providers/barangay_provider.dart'; // Relative import
-import '../../widgets/custom_app_bar.dart'; // Relative import
+import '../../constants/app_constants.dart';
+import '../../providers/user_provider.dart';
+import '../../providers/barangay_provider.dart';
+import '../../providers/jobs_provider.dart';
+import '../../providers/services_provider.dart';
+import '../../providers/rentals_provider.dart';
+import '../../models/job.dart';
+import '../../models/service.dart';
+import '../../models/rental.dart';
+import '../../widgets/custom_app_bar.dart';
 import '../search/search_screen.dart';
 
 class HomeScreen extends StatelessWidget {
@@ -16,6 +22,9 @@ class HomeScreen extends StatelessWidget {
   Widget build(BuildContext context) {
     final userProvider = Provider.of<UserProvider>(context);
     final barangayProvider = Provider.of<BarangayProvider>(context);
+    final jobsProvider = Provider.of<JobsProvider>(context);
+    final servicesProvider = Provider.of<ServicesProvider>(context);
+    final rentalsProvider = Provider.of<RentalsProvider>(context);
     final user = userProvider.currentUser;
 
     // Safety check
@@ -284,18 +293,162 @@ class HomeScreen extends StatelessWidget {
 
             const SizedBox(height: 24),
 
-            // 5. Featured Section Headers (Placeholders)
+            // 5. Featured Section Headers
             _buildSectionHeader('Featured Jobs', () => onNavigate(1)),
-            _buildPlaceholderList(),
+            _buildJobsList(context, jobsProvider.allJobs),
 
             _buildSectionHeader('Top Services', () => onNavigate(2)),
-            _buildPlaceholderList(),
+            _buildServicesList(context, servicesProvider.allServices),
 
             _buildSectionHeader('Recent Rentals', () => onNavigate(3)),
-            _buildPlaceholderList(),
+            _buildRentalsList(context, rentalsProvider.allRentals),
 
             const SizedBox(height: 24),
           ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildJobsList(BuildContext context, List<JobModel> jobs) {
+    if (jobs.isEmpty) return _buildPlaceholderList();
+    // Take top 5
+    final displayJobs = jobs.take(5).toList();
+    return SizedBox(
+      height: 140,
+      child: ListView.builder(
+        scrollDirection: Axis.horizontal,
+        padding: const EdgeInsets.symmetric(horizontal: 16),
+        itemCount: displayJobs.length,
+        itemBuilder: (context, index) {
+          final job = displayJobs[index];
+          return _buildCard(
+            context,
+            icon: Icons.work_outline,
+            title: job.title,
+            subtitle: '₱${job.wage.toStringAsFixed(0)}',
+            color: Colors.blue,
+            onTap: () {
+              // Navigate to job detail (if available, mostly just nav to tab for now)
+              onNavigate(1);
+            },
+          );
+        },
+      ),
+    );
+  }
+
+  Widget _buildServicesList(BuildContext context, List<ServiceModel> services) {
+    if (services.isEmpty) return _buildPlaceholderList();
+    final displayServices = services.take(5).toList();
+    return SizedBox(
+      height: 140,
+      child: ListView.builder(
+        scrollDirection: Axis.horizontal,
+        padding: const EdgeInsets.symmetric(horizontal: 16),
+        itemCount: displayServices.length,
+        itemBuilder: (context, index) {
+          final service = displayServices[index];
+          return _buildCard(
+            context,
+            icon: Icons.handyman_outlined,
+            title: service.name,
+            subtitle: '₱${service.rate.toStringAsFixed(0)}',
+            color: Colors.orange,
+            onTap: () => onNavigate(2),
+          );
+        },
+      ),
+    );
+  }
+
+  Widget _buildRentalsList(BuildContext context, List<RentalModel> rentals) {
+    if (rentals.isEmpty) return _buildPlaceholderList();
+    final displayRentals = rentals.take(5).toList();
+    return SizedBox(
+      height: 140,
+      child: ListView.builder(
+        scrollDirection: Axis.horizontal,
+        padding: const EdgeInsets.symmetric(horizontal: 16),
+        itemCount: displayRentals.length,
+        itemBuilder: (context, index) {
+          final rental = displayRentals[index];
+          return _buildCard(
+            context,
+            icon: Icons.home_repair_service_outlined,
+            title: rental.itemName,
+            subtitle: '₱${rental.rentPrice.toStringAsFixed(0)}',
+            color: Colors.purple,
+            onTap: () => onNavigate(3),
+          );
+        },
+      ),
+    );
+  }
+
+  Widget _buildCard(
+    BuildContext context, {
+    required IconData icon,
+    required String title,
+    required String subtitle,
+    required Color color,
+    required VoidCallback onTap,
+  }) {
+    return Container(
+      width: 160,
+      margin: const EdgeInsets.only(right: 12),
+      child: Material(
+        color: Colors.transparent,
+        child: InkWell(
+          onTap: onTap,
+          borderRadius: BorderRadius.circular(16),
+          child: Container(
+            padding: const EdgeInsets.all(16),
+            decoration: BoxDecoration(
+              color: Colors.white,
+              borderRadius: BorderRadius.circular(16),
+              border: Border.all(color: Colors.grey.withValues(alpha: 0.2)),
+              boxShadow: [
+                BoxShadow(
+                  color: Colors.black.withValues(alpha: 0.05),
+                  blurRadius: 8,
+                  offset: const Offset(0, 4),
+                ),
+              ],
+            ),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                Container(
+                  padding: const EdgeInsets.all(8),
+                  decoration: BoxDecoration(
+                    color: color.withValues(alpha: 0.1),
+                    shape: BoxShape.circle,
+                  ),
+                  child: Icon(icon, color: color, size: 24),
+                ),
+                const Spacer(),
+                Text(
+                  title,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: GoogleFonts.poppins(
+                    fontWeight: FontWeight.w600,
+                    fontSize: 14,
+                  ),
+                ),
+                const SizedBox(height: 4),
+                Text(
+                  subtitle,
+                  style: GoogleFonts.poppins(
+                    color: Colors.grey[600],
+                    fontSize: 12,
+                  ),
+                ),
+              ],
+            ),
+          ),
         ),
       ),
     );
