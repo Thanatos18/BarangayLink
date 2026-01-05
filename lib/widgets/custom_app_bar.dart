@@ -7,6 +7,7 @@ import '../screens/notifications/notifications_screen.dart';
 
 class CustomAppBar extends StatelessWidget implements PreferredSizeWidget {
   final String title;
+  final Widget? titleWidget;
   final List<Widget>? actions;
   final bool showBackButton;
   final Widget? leading;
@@ -16,6 +17,7 @@ class CustomAppBar extends StatelessWidget implements PreferredSizeWidget {
   const CustomAppBar({
     super.key,
     required this.title,
+    this.titleWidget,
     this.actions,
     this.showBackButton = false,
     this.leading,
@@ -81,14 +83,15 @@ class CustomAppBar extends StatelessWidget implements PreferredSizeWidget {
     }
 
     return AppBar(
-      title: Text(
-        title,
-        style: GoogleFonts.poppins(
-          color: Colors.white,
-          fontWeight: FontWeight.w600,
-          fontSize: 20,
-        ),
-      ),
+      title: titleWidget ??
+          Text(
+            title,
+            style: GoogleFonts.poppins(
+              color: Colors.white,
+              fontWeight: FontWeight.w600,
+              fontSize: 20,
+            ),
+          ),
       centerTitle: false,
       backgroundColor: kPrimaryColor,
       foregroundColor: Colors.white,

@@ -92,14 +92,34 @@ class _LoginScreenState extends State<LoginScreen> {
                       // Logo
                       Image.asset('assets/logo3.png', height: 100),
                       const SizedBox(height: 24.0),
-                      Text(
-                        'Welcome to\nBarangayLink',
-                        style:
-                            Theme.of(context).textTheme.headlineSmall?.copyWith(
-                                  fontWeight: FontWeight.bold,
-                                  color: Theme.of(context).colorScheme.primary,
-                                ),
+                      RichText(
                         textAlign: TextAlign.center,
+                        text: TextSpan(
+                          style: Theme.of(context)
+                              .textTheme
+                              .headlineSmall
+                              ?.copyWith(
+                                fontWeight: FontWeight.bold,
+                                height: 1.2,
+                                color: Theme.of(context).colorScheme.primary,
+                              ),
+                          children: [
+                            const TextSpan(text: 'Welcome to\n'),
+                            TextSpan(
+                              text: 'Barangay',
+                              style: TextStyle(
+                                color:
+                                    const Color(0xFF7582EB), // Periwinkle Blue
+                              ),
+                            ),
+                            TextSpan(
+                              text: 'Link',
+                              style: TextStyle(
+                                color: const Color(0xFFFBB040), // Orange/Yellow
+                              ),
+                            ),
+                          ],
+                        ),
                       ),
                       const SizedBox(height: 8.0),
                       Text(

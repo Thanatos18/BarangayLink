@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import '../../services/auth_service.dart'; // Relative import
 import '../../utils/validators.dart'; // Relative import
-import '../../widgets/custom_button.dart'; // Relative import
 
 class ForgotPasswordScreen extends StatefulWidget {
   const ForgotPasswordScreen({super.key});
@@ -63,95 +62,157 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
 
   @override
   Widget build(BuildContext context) {
+    // Modern Gradient Layout
     return Scaffold(
-      appBar: AppBar(title: const Text('Reset Password')),
-      body: Center(
-        // Centered for better look on tablets/web
-        child: SingleChildScrollView(
-          padding: const EdgeInsets.all(24.0),
-          child: Form(
-            key: _formKey,
-            child: Column(
-              mainAxisAlignment: MainAxisAlignment.center,
-              crossAxisAlignment: CrossAxisAlignment.stretch,
-              children: [
-                const Icon(Icons.lock_reset, size: 80, color: Colors.grey),
-                const SizedBox(height: 24.0),
-                Text(
-                  'Forgot Your Password?',
-                  style: Theme.of(context).textTheme.headlineMedium,
-                  textAlign: TextAlign.center,
-                ),
-                const SizedBox(height: 16.0),
-                const Text(
-                  'Enter your email address below and we will send you a link to reset your password.',
-                  textAlign: TextAlign.center,
-                  style: TextStyle(color: Colors.grey),
-                ),
-                const SizedBox(height: 32.0),
+      extendBodyBehindAppBar: true,
+      appBar: AppBar(
+        title: const Text(''), // Hide title, use content instead
+        backgroundColor: Colors.transparent,
+        elevation: 0,
+        leading: IconButton(
+          icon: const Icon(Icons.arrow_back, color: Colors.white),
+          onPressed: () => Navigator.of(context).pop(),
+        ),
+      ),
+      body: Container(
+        decoration: BoxDecoration(
+          gradient: LinearGradient(
+            begin: Alignment.topLeft,
+            end: Alignment.bottomRight,
+            colors: [
+              Theme.of(context).colorScheme.primary,
+              Theme.of(context).colorScheme.secondary,
+            ],
+          ),
+        ),
+        child: Center(
+          child: SingleChildScrollView(
+            padding: const EdgeInsets.all(24.0),
+            child: Card(
+              elevation: 8,
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(24),
+              ),
+              child: Padding(
+                padding: const EdgeInsets.all(32.0),
+                child: Form(
+                  key: _formKey,
+                  child: Column(
+                    mainAxisSize: MainAxisSize.min,
+                    crossAxisAlignment: CrossAxisAlignment.stretch,
+                    children: [
+                      // Logo
+                      Image.asset('assets/logo3.png', height: 80),
+                      const SizedBox(height: 24.0),
 
-                TextFormField(
-                  controller: _emailController,
-                  decoration: const InputDecoration(
-                    labelText: 'Email',
-                    border: OutlineInputBorder(),
-                    prefixIcon: Icon(Icons.email),
-                  ),
-                  validator: Validators.validateEmail,
-                  keyboardType: TextInputType.emailAddress,
-                  // Action button on keyboard triggers submission
-                  textInputAction: TextInputAction.done,
-                  onFieldSubmitted: (_) => _sendResetEmail(),
-                ),
-                const SizedBox(height: 24.0),
-
-                CustomButton(
-                  text: 'Send Reset Email',
-                  onPressed: _sendResetEmail,
-                  isLoading: _isLoading,
-                ),
-
-                // Message Area
-                if (_message != null) ...[
-                  const SizedBox(height: 24.0),
-                  Container(
-                    padding: const EdgeInsets.all(12),
-                    decoration: BoxDecoration(
-                      color: _isError
-                          ? Colors.red.shade50
-                          : Colors.green.shade50,
-                      borderRadius: BorderRadius.circular(8),
-                      border: Border.all(
-                        color: _isError
-                            ? Colors.red.shade200
-                            : Colors.green.shade200,
-                      ),
-                    ),
-                    child: Row(
-                      children: [
-                        Icon(
-                          _isError
-                              ? Icons.error_outline
-                              : Icons.check_circle_outline,
-                          color: _isError ? Colors.red : Colors.green,
-                        ),
-                        const SizedBox(width: 12),
-                        Expanded(
-                          child: Text(
-                            _message!,
-                            style: TextStyle(
-                              color: _isError
-                                  ? Colors.red.shade800
-                                  : Colors.green.shade800,
-                              fontWeight: FontWeight.w500,
+                      RichText(
+                        textAlign: TextAlign.center,
+                        text: TextSpan(
+                          style: Theme.of(context)
+                              .textTheme
+                              .headlineSmall
+                              ?.copyWith(
+                                fontWeight: FontWeight.bold,
+                                height: 1.2,
+                                color: Theme.of(context).colorScheme.primary,
+                              ),
+                          children: [
+                            const TextSpan(text: 'Forgot\n'),
+                            TextSpan(
+                              text: 'Password?',
+                              style: TextStyle(
+                                color: const Color(
+                                  0xFFFBB040,
+                                ), // Orange/Yellow
+                              ),
                             ),
+                          ],
+                        ),
+                      ),
+                      const SizedBox(height: 16.0),
+                      Text(
+                        'Enter your email address below and we will send you a link to reset your password.',
+                        textAlign: TextAlign.center,
+                        style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                              color: Colors.grey[600],
+                            ),
+                      ),
+                      const SizedBox(height: 32.0),
+
+                      TextFormField(
+                        controller: _emailController,
+                        decoration: const InputDecoration(
+                          labelText: 'Email',
+                          prefixIcon: Icon(Icons.email),
+                        ),
+                        validator: Validators.validateEmail,
+                        keyboardType: TextInputType.emailAddress,
+                        textInputAction: TextInputAction.done,
+                        onFieldSubmitted: (_) => _sendResetEmail(),
+                      ),
+                      const SizedBox(height: 24.0),
+
+                      SizedBox(
+                        height: 50,
+                        child: ElevatedButton(
+                          onPressed: _isLoading ? null : _sendResetEmail,
+                          child: _isLoading
+                              ? const SizedBox(
+                                  height: 24,
+                                  width: 24,
+                                  child: CircularProgressIndicator(
+                                    color: Colors.white,
+                                    strokeWidth: 2,
+                                  ),
+                                )
+                              : const Text('Send Reset Email'),
+                        ),
+                      ),
+
+                      // Message Area
+                      if (_message != null) ...[
+                        const SizedBox(height: 24.0),
+                        Container(
+                          padding: const EdgeInsets.all(12),
+                          decoration: BoxDecoration(
+                            color: _isError
+                                ? Colors.red.shade50
+                                : Colors.green.shade50,
+                            borderRadius: BorderRadius.circular(8),
+                            border: Border.all(
+                              color: _isError
+                                  ? Colors.red.shade200
+                                  : Colors.green.shade200,
+                            ),
+                          ),
+                          child: Row(
+                            children: [
+                              Icon(
+                                _isError
+                                    ? Icons.error_outline
+                                    : Icons.check_circle_outline,
+                                color: _isError ? Colors.red : Colors.green,
+                              ),
+                              const SizedBox(width: 12),
+                              Expanded(
+                                child: Text(
+                                  _message!,
+                                  style: TextStyle(
+                                    color: _isError
+                                        ? Colors.red.shade800
+                                        : Colors.green.shade800,
+                                    fontWeight: FontWeight.w500,
+                                  ),
+                                ),
+                              ),
+                            ],
                           ),
                         ),
                       ],
-                    ),
+                    ],
                   ),
-                ],
-              ],
+                ),
+              ),
             ),
           ),
         ),
