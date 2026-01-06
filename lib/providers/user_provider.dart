@@ -116,4 +116,30 @@ class UserProvider extends ChangeNotifier {
       rethrow;
     }
   }
+
+  Future<void> updateNotificationSettings({
+    required bool pushNotificationsEnabled,
+    required bool emailNotificationsEnabled,
+  }) async {
+    if (_currentUser == null) return;
+
+    try {
+      _setLoading(true);
+      await _firebaseService.updateUserProfile(_currentUser!.uid, {
+        'pushNotificationsEnabled': pushNotificationsEnabled,
+        'emailNotificationsEnabled': emailNotificationsEnabled,
+      });
+      // Update local state smoothly
+      _currentUser = _currentUser!.copyWith(
+        pushNotificationsEnabled: pushNotificationsEnabled,
+        emailNotificationsEnabled: emailNotificationsEnabled,
+      );
+      notifyListeners();
+    } catch (e) {
+      _setError(e.toString());
+      rethrow;
+    } finally {
+      _setLoading(false);
+    }
+  }
 }

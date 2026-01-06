@@ -12,9 +12,6 @@ class SettingsScreen extends StatefulWidget {
 }
 
 class _SettingsScreenState extends State<SettingsScreen> {
-  bool _notificationsEnabled = true;
-  bool _emailNotifications = true;
-
   @override
   Widget build(BuildContext context) {
     final userProvider = Provider.of<UserProvider>(context);
@@ -33,9 +30,14 @@ class _SettingsScreenState extends State<SettingsScreen> {
             SwitchListTile(
               title: const Text('Push Notifications'),
               subtitle: const Text('Receive app notifications'),
-              value: _notificationsEnabled,
+              value: userProvider.currentUser?.pushNotificationsEnabled ?? true,
               onChanged: (value) {
-                setState(() => _notificationsEnabled = value);
+                userProvider.updateNotificationSettings(
+                  pushNotificationsEnabled: value,
+                  emailNotificationsEnabled:
+                      userProvider.currentUser?.emailNotificationsEnabled ??
+                          true,
+                );
               },
               secondary: const Icon(Icons.notifications),
             ),
@@ -43,9 +45,15 @@ class _SettingsScreenState extends State<SettingsScreen> {
             SwitchListTile(
               title: const Text('Email Notifications'),
               subtitle: const Text('Receive email updates'),
-              value: _emailNotifications,
+              value:
+                  userProvider.currentUser?.emailNotificationsEnabled ?? true,
               onChanged: (value) {
-                setState(() => _emailNotifications = value);
+                userProvider.updateNotificationSettings(
+                  pushNotificationsEnabled:
+                      userProvider.currentUser?.pushNotificationsEnabled ??
+                          true,
+                  emailNotificationsEnabled: value,
+                );
               },
               secondary: const Icon(Icons.email),
             ),

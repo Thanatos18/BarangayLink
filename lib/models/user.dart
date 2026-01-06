@@ -12,6 +12,8 @@ class UserModel {
   final DateTime updatedAt;
   final bool isActive;
   final bool isBanned;
+  final bool pushNotificationsEnabled;
+  final bool emailNotificationsEnabled;
 
   UserModel({
     required this.uid,
@@ -25,6 +27,8 @@ class UserModel {
     required this.updatedAt,
     this.isActive = true, // Default active
     this.isBanned = false, // Default not banned
+    this.pushNotificationsEnabled = true, // Default enabled
+    this.emailNotificationsEnabled = true, // Default enabled
   });
 
   // Method to check if user is admin
@@ -52,6 +56,8 @@ class UserModel {
       'updatedAt': Timestamp.fromDate(updatedAt),
       'isActive': isActive,
       'isBanned': isBanned,
+      'pushNotificationsEnabled': pushNotificationsEnabled,
+      'emailNotificationsEnabled': emailNotificationsEnabled,
     };
   }
 
@@ -70,6 +76,8 @@ class UserModel {
       updatedAt: (map['updatedAt'] as Timestamp?)?.toDate() ?? DateTime.now(),
       isActive: map['isActive'] ?? true,
       isBanned: map['isBanned'] ?? false,
+      pushNotificationsEnabled: map['pushNotificationsEnabled'] ?? true,
+      emailNotificationsEnabled: map['emailNotificationsEnabled'] ?? true,
     );
   }
 
@@ -83,6 +91,8 @@ class UserModel {
     DateTime? updatedAt,
     bool? isActive,
     bool? isBanned,
+    bool? pushNotificationsEnabled,
+    bool? emailNotificationsEnabled,
   }) {
     return UserModel(
       uid: uid, // ID never changes
@@ -96,6 +106,10 @@ class UserModel {
       updatedAt: updatedAt ?? this.updatedAt,
       isActive: isActive ?? this.isActive,
       isBanned: isBanned ?? this.isBanned,
+      pushNotificationsEnabled:
+          pushNotificationsEnabled ?? this.pushNotificationsEnabled,
+      emailNotificationsEnabled:
+          emailNotificationsEnabled ?? this.emailNotificationsEnabled,
     );
   }
 }
