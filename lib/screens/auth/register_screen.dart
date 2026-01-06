@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 import '../../providers/user_provider.dart';
 import '../../utils/validators.dart';
 import '../../widgets/barangay_dropdown.dart';
@@ -57,10 +58,40 @@ class _RegisterScreenState extends State<RegisterScreen> {
           );
         }
       } catch (e) {
+        String errorMessage;
+        if (e is FirebaseAuthException) {
+          switch (e.code) {
+            case 'email-already-in-use':
+              errorMessage =
+                  'This email address is already in use. Please use a different one or login.';
+              break;
+            case 'invalid-email':
+              errorMessage = 'The email address format is invalid.';
+              break;
+            case 'operation-not-allowed':
+              errorMessage = 'Email/password accounts are not enabled.';
+              break;
+            case 'weak-password':
+              errorMessage =
+                  'The password is too weak. Please use a stronger password.';
+              break;
+            case 'network-request-failed':
+              errorMessage =
+                  'Network error. Please check your internet connection.';
+              break;
+            default:
+              errorMessage =
+                  e.message ?? 'An error occurred during registration.';
+          }
+        } else {
+          errorMessage = userProvider.errorMessage ??
+              e.toString().replaceAll('Exception: ', '');
+        }
+
         if (mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(
-              content: Text(userProvider.errorMessage ?? 'Registration failed'),
+              content: Text(errorMessage),
               backgroundColor: Colors.red,
             ),
           );

@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 import '../../providers/user_provider.dart';
 import '../../utils/validators.dart';
 import 'register_screen.dart';
@@ -43,10 +44,46 @@ class _LoginScreenState extends State<LoginScreen> {
           );
         }
       } catch (e) {
+        String errorMessage;
+        if (e is FirebaseAuthException) {
+          switch (e.code) {
+            case 'invalid-email':
+              errorMessage = 'The email address format is invalid.';
+              break;
+            case 'user-disabled':
+              errorMessage = 'This user account has been disabled.';
+              break;
+            case 'user-not-found':
+              errorMessage = 'No user found with this email.';
+              break;
+            case 'wrong-password':
+              errorMessage = 'Incorrect password. Please try again.';
+              break;
+            case 'invalid-credential':
+              errorMessage =
+                  'Incorrect email or password. Please double-check and try again.';
+              break;
+            case 'too-many-requests':
+              errorMessage =
+                  'Too many failed attempts. Please try again later.';
+              break;
+            case 'network-request-failed':
+              errorMessage =
+                  'Network error. Please check your internet connection.';
+              break;
+            default:
+              errorMessage = e.message ?? 'An error occurred during login.';
+          }
+        } else {
+          // If it's not a Firebase Auth exception, check userProvider.errorMessage or use generic
+          errorMessage = userProvider.errorMessage ??
+              e.toString().replaceAll('Exception: ', '');
+        }
+
         if (mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(
-              content: Text(userProvider.errorMessage ?? 'Login failed'),
+              content: Text(errorMessage),
               backgroundColor: Colors.red,
             ),
           );
