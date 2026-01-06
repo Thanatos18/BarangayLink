@@ -215,7 +215,6 @@ class HomeScreen extends StatelessWidget {
                             value: null,
                             child: Text("All Tagum City (Show All)"),
                           ),
-                          // Fixed: Use tagumBarangays (lowerCamelCase)
                           ...barangayProvider.tagumBarangaysList.map(
                             (b) => DropdownMenuItem<String?>(
                               value: b,
@@ -224,7 +223,12 @@ class HomeScreen extends StatelessWidget {
                           ),
                         ],
                         onChanged: (val) {
+                          // Update global state
                           barangayProvider.setFilter(val);
+                          // Sync with all content providers
+                          jobsProvider.setBarangayFilter(val);
+                          servicesProvider.setBarangayFilter(val);
+                          rentalsProvider.setBarangayFilter(val);
                         },
                       ),
                     ),
@@ -295,13 +299,13 @@ class HomeScreen extends StatelessWidget {
 
             // 5. Featured Section Headers
             _buildSectionHeader('Featured Jobs', () => onNavigate(1)),
-            _buildJobsList(context, jobsProvider.allJobs),
+            _buildJobsList(context, jobsProvider.filteredJobs),
 
             _buildSectionHeader('Top Services', () => onNavigate(2)),
-            _buildServicesList(context, servicesProvider.allServices),
+            _buildServicesList(context, servicesProvider.filteredServices),
 
             _buildSectionHeader('Recent Rentals', () => onNavigate(3)),
-            _buildRentalsList(context, rentalsProvider.allRentals),
+            _buildRentalsList(context, rentalsProvider.filteredRentals),
 
             const SizedBox(height: 24),
           ],
