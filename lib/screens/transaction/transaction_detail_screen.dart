@@ -115,17 +115,16 @@ class _TransactionDetailScreenState extends State<TransactionDetailScreen> {
 
             // Timeline Card
             _buildTimelineCard(),
+            // Extra spacing for scroll visibility if needed
             const SizedBox(height: 24),
-
-            // Action Buttons
-            _buildActionButtons(
-              context,
-              transactionProvider,
-              isInitiator,
-              isTarget,
-            ),
           ],
         ),
+      ),
+      bottomNavigationBar: _buildBottomActions(
+        context,
+        transactionProvider,
+        isInitiator,
+        isTarget,
       ),
     );
   }
@@ -436,128 +435,139 @@ class _TransactionDetailScreenState extends State<TransactionDetailScreen> {
     );
   }
 
-  Widget _buildActionButtons(
+  Widget? _buildBottomActions(
     BuildContext context,
     TransactionProvider provider,
     bool isInitiator,
     bool isTarget,
   ) {
-    final List<Widget> buttons = [];
+    Widget? actionContent;
 
-    // Target user actions for Pending transactions
+    // Target user actions for Pending transactions (Accept/Decline)
     if (isTarget && widget.transaction.isPending) {
-      buttons.addAll([
-        Expanded(
-          child: ElevatedButton.icon(
-            onPressed: () => _handleAccept(context, provider),
-            icon: const Icon(Icons.check),
-            label: const Text('Accept'),
-            style: ElevatedButton.styleFrom(
-              backgroundColor: Colors.green,
-              padding: const EdgeInsets.symmetric(vertical: 14),
+      actionContent = Row(
+        children: [
+          Expanded(
+            child: ElevatedButton.icon(
+              onPressed: () => _handleAccept(context, provider),
+              icon: const Icon(Icons.check),
+              label: const Text('Accept'),
+              style: ElevatedButton.styleFrom(
+                backgroundColor: Colors.green,
+                padding: const EdgeInsets.symmetric(vertical: 14),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(12),
+                ),
+              ),
             ),
           ),
-        ),
-        const SizedBox(width: 12),
-        Expanded(
-          child: OutlinedButton.icon(
-            onPressed: () => _handleDecline(context, provider),
-            icon: const Icon(Icons.close),
-            label: const Text('Decline'),
-            style: OutlinedButton.styleFrom(
-              foregroundColor: Colors.red,
-              side: const BorderSide(color: Colors.red),
-              padding: const EdgeInsets.symmetric(vertical: 14),
+          const SizedBox(width: 12),
+          Expanded(
+            child: OutlinedButton.icon(
+              onPressed: () => _handleDecline(context, provider),
+              icon: const Icon(Icons.close),
+              label: const Text('Decline'),
+              style: OutlinedButton.styleFrom(
+                foregroundColor: Colors.red,
+                side: const BorderSide(color: Colors.red),
+                padding: const EdgeInsets.symmetric(vertical: 14),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(12),
+                ),
+              ),
             ),
           ),
-        ),
-      ]);
+        ],
+      );
     }
-
     // Pay Now button for Accepted transactions
-    if (widget.transaction.isAccepted && !widget.transaction.isPaid) {
-      buttons.add(
-        SizedBox(
-          width: double.infinity,
-          child: ElevatedButton.icon(
-            onPressed: () => _navigateToPayment(context),
-            icon: const Icon(Icons.payment),
-            label: const Text('Pay Now'),
-            style: ElevatedButton.styleFrom(
-              backgroundColor: kAccentColor,
-              foregroundColor: Colors.black87,
-              padding: const EdgeInsets.symmetric(vertical: 14),
+    else if (widget.transaction.isAccepted && !widget.transaction.isPaid) {
+      actionContent = SizedBox(
+        width: double.infinity,
+        child: ElevatedButton.icon(
+          onPressed: () => _navigateToPayment(context),
+          icon: const Icon(Icons.payment),
+          label: const Text('Pay Now'),
+          style: ElevatedButton.styleFrom(
+            backgroundColor: kAccentColor,
+            foregroundColor: Colors.black87,
+            padding: const EdgeInsets.symmetric(vertical: 14),
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(12),
             ),
           ),
         ),
       );
     }
-
     // Mark as Completed button for In Progress transactions (initiator only)
-    if (isInitiator && widget.transaction.isInProgress) {
-      buttons.add(
-        SizedBox(
-          width: double.infinity,
-          child: ElevatedButton.icon(
-            onPressed: () => _handleComplete(context, provider),
-            icon: const Icon(Icons.check_circle),
-            label: const Text('Mark as Completed'),
-            style: ElevatedButton.styleFrom(
-              backgroundColor: Colors.green,
-              padding: const EdgeInsets.symmetric(vertical: 14),
+    else if (isInitiator && widget.transaction.isInProgress) {
+      actionContent = SizedBox(
+        width: double.infinity,
+        child: ElevatedButton.icon(
+          onPressed: () => _handleComplete(context, provider),
+          icon: const Icon(Icons.check_circle),
+          label: const Text('Mark as Completed'),
+          style: ElevatedButton.styleFrom(
+            backgroundColor: Colors.green,
+            padding: const EdgeInsets.symmetric(vertical: 14),
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(12),
             ),
           ),
         ),
       );
     }
-
     // Leave Feedback button for Completed transactions
-    if (widget.transaction.isCompleted) {
-      buttons.add(
-        SizedBox(
-          width: double.infinity,
-          child: OutlinedButton.icon(
-            onPressed: () => _navigateToFeedback(context),
-            icon: const Icon(Icons.star_outline),
-            label: const Text('Leave Feedback'),
-            style: OutlinedButton.styleFrom(
-              foregroundColor: kAccentColor,
-              side: const BorderSide(color: kAccentColor),
-              padding: const EdgeInsets.symmetric(vertical: 14),
+    else if (widget.transaction.isCompleted) {
+      actionContent = SizedBox(
+        width: double.infinity,
+        child: OutlinedButton.icon(
+          onPressed: () => _navigateToFeedback(context),
+          icon: const Icon(Icons.star_outline),
+          label: const Text('Leave Feedback'),
+          style: OutlinedButton.styleFrom(
+            foregroundColor: kAccentColor,
+            side: const BorderSide(color: kAccentColor),
+            padding: const EdgeInsets.symmetric(vertical: 14),
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(12),
             ),
           ),
         ),
       );
     }
-
     // Cancel button for Pending transactions (initiator)
-    if (isInitiator && widget.transaction.isPending) {
-      buttons.add(
-        SizedBox(
-          width: double.infinity,
-          child: TextButton.icon(
-            onPressed: () => _handleCancel(context, provider),
-            icon: const Icon(Icons.cancel_outlined),
-            label: const Text('Cancel Request'),
-            style: TextButton.styleFrom(foregroundColor: Colors.red),
+    else if (isInitiator && widget.transaction.isPending) {
+      actionContent = SizedBox(
+        width: double.infinity,
+        child: TextButton.icon(
+          onPressed: () => _handleCancel(context, provider),
+          icon: const Icon(Icons.cancel_outlined),
+          label: const Text('Cancel Request'),
+          style: TextButton.styleFrom(
+            foregroundColor: Colors.red,
+            padding: const EdgeInsets.symmetric(vertical: 14),
           ),
         ),
       );
     }
 
-    if (buttons.isEmpty) {
-      return const SizedBox.shrink();
-    }
+    if (actionContent == null) return null;
 
-    return Column(
-      children: [
-        if (buttons.length == 2 && widget.transaction.isPending && isTarget)
-          Row(children: buttons)
-        else
-          ...buttons.map(
-            (b) => Padding(padding: const EdgeInsets.only(bottom: 8), child: b),
+    return Container(
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        boxShadow: [
+          BoxShadow(
+            color: Colors.grey.withOpacity(0.1),
+            spreadRadius: 1,
+            blurRadius: 10,
+            offset: const Offset(0, -2),
           ),
-      ],
+        ],
+      ),
+      child: SafeArea(child: actionContent),
     );
   }
 
