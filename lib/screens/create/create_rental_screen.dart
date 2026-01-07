@@ -4,6 +4,7 @@ import '../../constants/app_constants.dart';
 import '../../models/rental.dart';
 import '../../providers/rentals_provider.dart';
 import '../../providers/user_provider.dart';
+import '../../providers/feedback_provider.dart';
 
 class CreateRentalScreen extends StatefulWidget {
   const CreateRentalScreen({super.key});
@@ -383,6 +384,7 @@ class _CreateRentalScreenState extends State<CreateRentalScreen> {
       await context.read<RentalsProvider>().createRental(rental);
 
       if (context.mounted) {
+        context.read<FeedbackProvider>().refreshUserData(currentUser.uid);
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(
             content: Text('Item listed successfully!'),

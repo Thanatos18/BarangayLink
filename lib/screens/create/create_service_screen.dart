@@ -4,6 +4,7 @@ import '../../constants/app_constants.dart';
 import '../../models/service.dart';
 import '../../providers/services_provider.dart';
 import '../../providers/user_provider.dart';
+import '../../providers/feedback_provider.dart';
 
 class CreateServiceScreen extends StatefulWidget {
   const CreateServiceScreen({super.key});
@@ -385,6 +386,7 @@ class _CreateServiceScreenState extends State<CreateServiceScreen> {
       await context.read<ServicesProvider>().createService(service);
 
       if (context.mounted) {
+        context.read<FeedbackProvider>().refreshUserData(currentUser.uid);
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(
             content: Text('Service offered successfully!'),

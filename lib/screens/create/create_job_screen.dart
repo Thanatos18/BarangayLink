@@ -4,6 +4,7 @@ import '../../constants/app_constants.dart';
 import '../../models/job.dart';
 import '../../providers/jobs_provider.dart';
 import '../../providers/user_provider.dart';
+import '../../providers/feedback_provider.dart';
 
 class CreateJobScreen extends StatefulWidget {
   const CreateJobScreen({super.key});
@@ -355,6 +356,7 @@ class _CreateJobScreenState extends State<CreateJobScreen> {
       await context.read<JobsProvider>().createJob(job);
 
       if (context.mounted) {
+        context.read<FeedbackProvider>().refreshUserData(currentUser.uid);
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(
             content: Text('Job posted successfully!'),
