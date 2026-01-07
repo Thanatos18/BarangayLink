@@ -55,9 +55,9 @@ class _EditRentalScreenState extends State<EditRentalScreen> {
 
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Edit Rental'),
+        title: const Text('Edit Rental', style: TextStyle(color: Colors.white)),
         backgroundColor: kPrimaryColor,
-        foregroundColor: Colors.white,
+        iconTheme: const IconThemeData(color: Colors.white),
       ),
       body: SingleChildScrollView(
         padding: const EdgeInsets.all(20),

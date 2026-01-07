@@ -600,7 +600,6 @@ class JobDetailScreen extends StatelessWidget {
   }
 
   void _showReportDialog(BuildContext context, UserModel currentUser) {
-    final reasonController = TextEditingController();
     final detailsController = TextEditingController();
     String selectedReason = ReportReasons.reasons.first;
 

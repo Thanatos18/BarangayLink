@@ -57,9 +57,10 @@ class _EditServiceScreenState extends State<EditServiceScreen> {
 
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Edit Service'),
+        title:
+            const Text('Edit Service', style: TextStyle(color: Colors.white)),
         backgroundColor: kPrimaryColor,
-        foregroundColor: Colors.white,
+        iconTheme: const IconThemeData(color: Colors.white),
       ),
       body: SingleChildScrollView(
         padding: const EdgeInsets.all(20),

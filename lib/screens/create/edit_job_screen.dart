@@ -56,9 +56,9 @@ class _EditJobScreenState extends State<EditJobScreen> {
 
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Edit Job'),
+        title: const Text('Edit Job', style: TextStyle(color: Colors.white)),
         backgroundColor: kPrimaryColor,
-        foregroundColor: Colors.white,
+        iconTheme: const IconThemeData(color: Colors.white),
       ),
       body: SingleChildScrollView(
         padding: const EdgeInsets.all(20),
