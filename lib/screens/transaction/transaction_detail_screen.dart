@@ -82,8 +82,19 @@ class _TransactionDetailScreenState extends State<TransactionDetailScreen> {
       );
     }
 
-    final isInitiator = widget.transaction.initiatedBy == currentUser.uid;
-    final isTarget = widget.transaction.targetUser == currentUser.uid;
+    // Get live transaction update
+    TransactionModel transaction;
+    try {
+      transaction = transactionProvider.allTransactions.firstWhere(
+        (t) => t.id == widget.transaction.id,
+        orElse: () => widget.transaction,
+      );
+    } catch (e) {
+      transaction = widget.transaction;
+    }
+
+    final isInitiator = transaction.initiatedBy == currentUser.uid;
+    final isTarget = transaction.targetUser == currentUser.uid;
 
     return Scaffold(
       appBar: const CustomAppBar(
@@ -96,25 +107,25 @@ class _TransactionDetailScreenState extends State<TransactionDetailScreen> {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             // Transaction Type Header
-            _buildTypeHeader(),
+            _buildTypeHeader(transaction),
             const SizedBox(height: 24),
 
             // Status Card
-            _buildStatusCard(),
+            _buildStatusCard(transaction),
             const SizedBox(height: 16),
 
             // Details Card
-            _buildDetailsCard(isInitiator),
+            _buildDetailsCard(transaction, isInitiator),
             const SizedBox(height: 16),
 
             // Amount Card (if has amount)
-            if (widget.transaction.transactionAmount > 0) ...[
-              _buildAmountCard(),
+            if (transaction.transactionAmount > 0) ...[
+              _buildAmountCard(transaction),
               const SizedBox(height: 16),
             ],
 
             // Timeline Card
-            _buildTimelineCard(),
+            _buildTimelineCard(transaction),
             // Extra spacing for scroll visibility if needed
             const SizedBox(height: 24),
           ],
@@ -123,23 +134,25 @@ class _TransactionDetailScreenState extends State<TransactionDetailScreen> {
       bottomNavigationBar: _buildBottomActions(
         context,
         transactionProvider,
+        transaction,
         isInitiator,
         isTarget,
       ),
     );
   }
 
-  Widget _buildTypeHeader() {
+  Widget _buildTypeHeader(TransactionModel transaction) {
     return Row(
       children: [
         Container(
           width: 56,
           height: 56,
           decoration: BoxDecoration(
-            color: _getTypeColor().withOpacity(0.1),
+            color: _getTypeColor(transaction).withOpacity(0.1),
             borderRadius: BorderRadius.circular(16),
           ),
-          child: Icon(_getTypeIcon(), color: _getTypeColor(), size: 28),
+          child: Icon(_getTypeIcon(transaction),
+              color: _getTypeColor(transaction), size: 28),
         ),
         const SizedBox(width: 16),
         Expanded(
@@ -147,16 +160,16 @@ class _TransactionDetailScreenState extends State<TransactionDetailScreen> {
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Text(
-                widget.transaction.typeLabel,
+                transaction.typeLabel,
                 style: TextStyle(
-                  color: _getTypeColor(),
+                  color: _getTypeColor(transaction),
                   fontWeight: FontWeight.w600,
                   fontSize: 14,
                 ),
               ),
               const SizedBox(height: 4),
               Text(
-                widget.transaction.relatedName,
+                transaction.relatedName,
                 style: const TextStyle(
                   fontWeight: FontWeight.bold,
                   fontSize: 20,
@@ -169,7 +182,7 @@ class _TransactionDetailScreenState extends State<TransactionDetailScreen> {
     );
   }
 
-  Widget _buildStatusCard() {
+  Widget _buildStatusCard(TransactionModel transaction) {
     return Card(
       elevation: 2,
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
@@ -177,7 +190,8 @@ class _TransactionDetailScreenState extends State<TransactionDetailScreen> {
         padding: const EdgeInsets.all(16),
         child: Row(
           children: [
-            Icon(_getStatusIcon(), color: _getStatusColor(), size: 32),
+            Icon(_getStatusIcon(transaction),
+                color: _getStatusColor(transaction), size: 32),
             const SizedBox(width: 16),
             Expanded(
               child: Column(
@@ -189,25 +203,25 @@ class _TransactionDetailScreenState extends State<TransactionDetailScreen> {
                   ),
                   const SizedBox(height: 4),
                   Text(
-                    widget.transaction.status,
+                    transaction.status,
                     style: TextStyle(
                       fontWeight: FontWeight.bold,
                       fontSize: 18,
-                      color: _getStatusColor(),
+                      color: _getStatusColor(transaction),
                     ),
                   ),
                 ],
               ),
             ),
             // Payment Status Badge
-            if (widget.transaction.transactionAmount > 0)
+            if (transaction.transactionAmount > 0)
               Container(
                 padding: const EdgeInsets.symmetric(
                   horizontal: 12,
                   vertical: 6,
                 ),
                 decoration: BoxDecoration(
-                  color: widget.transaction.isPaid
+                  color: transaction.isPaid
                       ? Colors.green.withOpacity(0.1)
                       : Colors.orange.withOpacity(0.1),
                   borderRadius: BorderRadius.circular(20),
@@ -216,21 +230,16 @@ class _TransactionDetailScreenState extends State<TransactionDetailScreen> {
                   mainAxisSize: MainAxisSize.min,
                   children: [
                     Icon(
-                      widget.transaction.isPaid
-                          ? Icons.check_circle
-                          : Icons.pending,
+                      transaction.isPaid ? Icons.check_circle : Icons.pending,
                       size: 16,
-                      color: widget.transaction.isPaid
-                          ? Colors.green
-                          : Colors.orange,
+                      color: transaction.isPaid ? Colors.green : Colors.orange,
                     ),
                     const SizedBox(width: 4),
                     Text(
-                      widget.transaction.paymentStatus,
+                      transaction.paymentStatus,
                       style: TextStyle(
-                        color: widget.transaction.isPaid
-                            ? Colors.green
-                            : Colors.orange,
+                        color:
+                            transaction.isPaid ? Colors.green : Colors.orange,
                         fontWeight: FontWeight.w600,
                         fontSize: 13,
                       ),
@@ -244,7 +253,7 @@ class _TransactionDetailScreenState extends State<TransactionDetailScreen> {
     );
   }
 
-  Widget _buildDetailsCard(bool isInitiator) {
+  Widget _buildDetailsCard(TransactionModel transaction, bool isInitiator) {
     final otherPartyName = isInitiator
         ? (_targetUserName ?? 'Loading...')
         : (_initiatedByName ?? 'Loading...');
@@ -271,13 +280,13 @@ class _TransactionDetailScreenState extends State<TransactionDetailScreen> {
             _buildDetailRow(
               icon: Icons.location_on,
               label: 'Barangay',
-              value: widget.transaction.barangay,
+              value: transaction.barangay,
             ),
             const Divider(height: 24),
             _buildDetailRow(
               icon: Icons.category,
               label: 'Type',
-              value: widget.transaction.typeLabel,
+              value: transaction.typeLabel,
             ),
           ],
         ),
@@ -323,7 +332,7 @@ class _TransactionDetailScreenState extends State<TransactionDetailScreen> {
     );
   }
 
-  Widget _buildAmountCard() {
+  Widget _buildAmountCard(TransactionModel transaction) {
     return Card(
       elevation: 2,
       color: kPrimaryColor.withOpacity(0.05),
@@ -338,7 +347,7 @@ class _TransactionDetailScreenState extends State<TransactionDetailScreen> {
               style: TextStyle(fontSize: 16, color: Colors.grey),
             ),
             Text(
-              '$kCurrencySymbol${widget.transaction.transactionAmount.toStringAsFixed(2)}',
+              '$kCurrencySymbol${transaction.transactionAmount.toStringAsFixed(2)}',
               style: const TextStyle(
                 fontWeight: FontWeight.bold,
                 fontSize: 24,
@@ -351,7 +360,7 @@ class _TransactionDetailScreenState extends State<TransactionDetailScreen> {
     );
   }
 
-  Widget _buildTimelineCard() {
+  Widget _buildTimelineCard(TransactionModel transaction) {
     return Card(
       elevation: 2,
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
@@ -368,19 +377,19 @@ class _TransactionDetailScreenState extends State<TransactionDetailScreen> {
             _buildTimelineItem(
               icon: Icons.add_circle,
               label: 'Created',
-              date: widget.transaction.createdAt,
+              date: transaction.createdAt,
               isFirst: true,
             ),
             _buildTimelineItem(
               icon: Icons.update,
               label: 'Last Updated',
-              date: widget.transaction.updatedAt,
+              date: transaction.updatedAt,
             ),
-            if (widget.transaction.completedAt != null)
+            if (transaction.completedAt != null)
               _buildTimelineItem(
                 icon: Icons.check_circle,
                 label: 'Completed',
-                date: widget.transaction.completedAt!,
+                date: transaction.completedAt!,
                 isLast: true,
                 color: Colors.green,
               ),
@@ -438,13 +447,14 @@ class _TransactionDetailScreenState extends State<TransactionDetailScreen> {
   Widget? _buildBottomActions(
     BuildContext context,
     TransactionProvider provider,
+    TransactionModel transaction,
     bool isInitiator,
     bool isTarget,
   ) {
     Widget? actionContent;
 
     // Target user actions for Pending transactions (Accept/Decline)
-    if (isTarget && widget.transaction.isPending) {
+    if (isTarget && transaction.isPending) {
       actionContent = Row(
         children: [
           Expanded(
@@ -481,7 +491,7 @@ class _TransactionDetailScreenState extends State<TransactionDetailScreen> {
       );
     }
     // Pay Now button for Accepted transactions
-    else if (widget.transaction.isAccepted && !widget.transaction.isPaid) {
+    else if (isInitiator && transaction.isAccepted && !transaction.isPaid) {
       actionContent = SizedBox(
         width: double.infinity,
         child: ElevatedButton.icon(
@@ -500,7 +510,7 @@ class _TransactionDetailScreenState extends State<TransactionDetailScreen> {
       );
     }
     // Mark as Completed button for In Progress transactions (initiator only)
-    else if (isInitiator && widget.transaction.isInProgress) {
+    else if (isInitiator && transaction.isInProgress) {
       actionContent = SizedBox(
         width: double.infinity,
         child: ElevatedButton.icon(
@@ -518,7 +528,7 @@ class _TransactionDetailScreenState extends State<TransactionDetailScreen> {
       );
     }
     // Leave Feedback button for Completed transactions
-    else if (widget.transaction.isCompleted) {
+    else if (transaction.isCompleted) {
       actionContent = SizedBox(
         width: double.infinity,
         child: OutlinedButton.icon(
@@ -537,7 +547,7 @@ class _TransactionDetailScreenState extends State<TransactionDetailScreen> {
       );
     }
     // Cancel button for Pending transactions (initiator)
-    else if (isInitiator && widget.transaction.isPending) {
+    else if (isInitiator && transaction.isPending) {
       actionContent = SizedBox(
         width: double.infinity,
         child: TextButton.icon(
@@ -748,8 +758,8 @@ class _TransactionDetailScreenState extends State<TransactionDetailScreen> {
 
   // --- Helper Methods ---
 
-  IconData _getTypeIcon() {
-    switch (widget.transaction.type) {
+  IconData _getTypeIcon(TransactionModel transaction) {
+    switch (transaction.type) {
       case 'job_application':
         return Icons.work_outline;
       case 'service_booking':
@@ -761,8 +771,8 @@ class _TransactionDetailScreenState extends State<TransactionDetailScreen> {
     }
   }
 
-  Color _getTypeColor() {
-    switch (widget.transaction.type) {
+  Color _getTypeColor(TransactionModel transaction) {
+    switch (transaction.type) {
       case 'job_application':
         return Colors.blue;
       case 'service_booking':
@@ -774,8 +784,8 @@ class _TransactionDetailScreenState extends State<TransactionDetailScreen> {
     }
   }
 
-  IconData _getStatusIcon() {
-    switch (widget.transaction.status) {
+  IconData _getStatusIcon(TransactionModel transaction) {
+    switch (transaction.status) {
       case 'Pending':
         return Icons.hourglass_empty;
       case 'Accepted':
@@ -791,8 +801,8 @@ class _TransactionDetailScreenState extends State<TransactionDetailScreen> {
     }
   }
 
-  Color _getStatusColor() {
-    switch (widget.transaction.status) {
+  Color _getStatusColor(TransactionModel transaction) {
+    switch (transaction.status) {
       case 'Pending':
         return Colors.orange;
       case 'Accepted':

@@ -1,6 +1,7 @@
 import 'dart:async';
 import 'package:flutter/foundation.dart';
 import '../models/transaction.dart';
+import '../models/notification.dart';
 import '../services/firebase_service.dart';
 
 /// Provider for managing transaction state with real-time updates.
@@ -79,7 +80,8 @@ class TransactionProvider extends ChangeNotifier {
     _errorMessage = null;
     notifyListeners();
 
-    _transactionSubscription = _firebaseService.getUserTransactionsStream(userId).listen(
+    _transactionSubscription =
+        _firebaseService.getUserTransactionsStream(userId).listen(
       (transactions) {
         _allTransactions = transactions;
         _isLoading = false;
@@ -122,7 +124,8 @@ class TransactionProvider extends ChangeNotifier {
   // --- Transaction Actions ---
 
   /// Update transaction status (Accept, Decline, etc.)
-  Future<bool> updateTransactionStatus(String transactionId, String newStatus) async {
+  Future<bool> updateTransactionStatus(
+      String transactionId, String newStatus) async {
     try {
       await _firebaseService.updateTransactionStatus(transactionId, newStatus);
       return true;
@@ -186,14 +189,15 @@ class TransactionProvider extends ChangeNotifier {
   }
 
   /// Get the name of the other party in a transaction
-  Future<String> getOtherPartyName(TransactionModel transaction, String currentUserId) async {
+  Future<String> getOtherPartyName(
+      TransactionModel transaction, String currentUserId) async {
     if (transaction.initiatedBy == currentUserId) {
       // Current user is initiator, return target's name
-      return transaction.targetUserName ?? 
+      return transaction.targetUserName ??
           await _firebaseService.getUserName(transaction.targetUser);
     } else {
       // Current user is target, return initiator's name
-      return transaction.initiatedByName ?? 
+      return transaction.initiatedByName ??
           await _firebaseService.getUserName(transaction.initiatedBy);
     }
   }
