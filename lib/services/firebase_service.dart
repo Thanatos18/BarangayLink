@@ -58,9 +58,8 @@ class FirebaseService {
   }
 
   Stream<List<JobModel>> getJobsStream(String? barangayFilter) {
-    Query query = _db
-        .collection('barangay_jobs')
-        .orderBy('createdAt', descending: true);
+    Query query =
+        _db.collection('barangay_jobs').orderBy('createdAt', descending: true);
 
     if (barangayFilter != null && barangayFilter != 'All Tagum City') {
       query = query.where('barangay', isEqualTo: barangayFilter);
@@ -93,6 +92,7 @@ class FirebaseService {
     String jobId,
     String jobTitle,
     String posterId,
+    String posterName,
     String applicantId,
     String applicantName,
     String barangay,
@@ -112,16 +112,17 @@ class FirebaseService {
         'applicants': FieldValue.arrayUnion([newApplicant.toMap()]),
       });
 
-      DocumentReference transRef = _db
-          .collection('barangay_transactions')
-          .doc();
+      DocumentReference transRef =
+          _db.collection('barangay_transactions').doc();
 
       Map<String, dynamic> transactionData = {
         'type': 'job_application',
         'relatedId': jobId,
         'relatedName': jobTitle,
         'initiatedBy': applicantId,
+        'initiatedByName': applicantName,
         'targetUser': posterId,
+        'targetUserName': posterName,
         'status': 'Pending',
         'barangay': barangay,
         'paymentStatus': 'Unpaid',
@@ -150,10 +151,8 @@ class FirebaseService {
 
   Future<ServiceModel?> getService(String serviceId) async {
     try {
-      final doc = await _db
-          .collection('barangay_services')
-          .doc(serviceId)
-          .get();
+      final doc =
+          await _db.collection('barangay_services').doc(serviceId).get();
       if (doc.exists) {
         return ServiceModel.fromMap(doc.data() as Map<String, dynamic>, doc.id);
       }
@@ -202,15 +201,15 @@ class FirebaseService {
     required String serviceId,
     required String serviceName,
     required String providerId,
+    required String providerName,
     required String clientId,
     required String clientName,
     required String barangay,
     required double rate,
   }) async {
     try {
-      DocumentReference transRef = _db
-          .collection('barangay_transactions')
-          .doc();
+      DocumentReference transRef =
+          _db.collection('barangay_transactions').doc();
 
       Map<String, dynamic> transactionData = {
         'type': 'service_booking',
@@ -219,6 +218,7 @@ class FirebaseService {
         'initiatedBy': clientId,
         'initiatedByName': clientName,
         'targetUser': providerId,
+        'targetUserName': providerName,
         'status': 'Pending',
         'barangay': barangay,
         'paymentStatus': 'Unpaid',
@@ -292,15 +292,15 @@ class FirebaseService {
     required String rentalId,
     required String itemName,
     required String ownerId,
+    required String ownerName,
     required String renterId,
     required String renterName,
     required String barangay,
     required double rentPrice,
   }) async {
     try {
-      DocumentReference transRef = _db
-          .collection('barangay_transactions')
-          .doc();
+      DocumentReference transRef =
+          _db.collection('barangay_transactions').doc();
 
       Map<String, dynamic> transactionData = {
         'type': 'rental_request',
@@ -309,6 +309,7 @@ class FirebaseService {
         'initiatedBy': renterId,
         'initiatedByName': renterName,
         'targetUser': ownerId,
+        'targetUserName': ownerName,
         'status': 'Pending',
         'barangay': barangay,
         'paymentStatus': 'Unpaid',
@@ -452,10 +453,10 @@ class FirebaseService {
         .orderBy('createdAt', descending: true)
         .snapshots()
         .map((snapshot) {
-          return snapshot.docs.map((doc) {
-            return FeedbackModel.fromMap(doc.data(), doc.id);
-          }).toList();
-        });
+      return snapshot.docs.map((doc) {
+        return FeedbackModel.fromMap(doc.data(), doc.id);
+      }).toList();
+    });
   }
 
   /// Calculate average rating for a user
@@ -540,10 +541,8 @@ class FirebaseService {
     DocumentSnapshot? lastDoc,
   }) async {
     try {
-      Query query = _db
-          .collection('barangay_users')
-          .orderBy('name')
-          .limit(limit);
+      Query query =
+          _db.collection('barangay_users').orderBy('name').limit(limit);
 
       if (lastDoc != null) {
         query = query.startAfterDocument(lastDoc);
@@ -587,10 +586,10 @@ class FirebaseService {
         .orderBy('createdAt', descending: true)
         .snapshots()
         .map((snapshot) {
-          return snapshot.docs.map((doc) {
-            return ReportModel.fromMap(doc.data(), doc.id);
-          }).toList();
-        });
+      return snapshot.docs.map((doc) {
+        return ReportModel.fromMap(doc.data(), doc.id);
+      }).toList();
+    });
   }
 
   /// Resolve a report
@@ -638,18 +637,12 @@ class FirebaseService {
     try {
       final usersCount = await _db.collection('barangay_users').count().get();
       final jobsCount = await _db.collection('barangay_jobs').count().get();
-      final servicesCount = await _db
-          .collection('barangay_services')
-          .count()
-          .get();
-      final rentalsCount = await _db
-          .collection('barangay_rentals')
-          .count()
-          .get();
-      final transactionsCount = await _db
-          .collection('barangay_transactions')
-          .count()
-          .get();
+      final servicesCount =
+          await _db.collection('barangay_services').count().get();
+      final rentalsCount =
+          await _db.collection('barangay_rentals').count().get();
+      final transactionsCount =
+          await _db.collection('barangay_transactions').count().get();
       final reportsCount = await _db
           .collection('barangay_reports')
           .where('status', isEqualTo: 'pending')
@@ -708,10 +701,10 @@ class FirebaseService {
         .limit(50)
         .snapshots()
         .map((snapshot) {
-          return snapshot.docs.map((doc) {
-            return NotificationModel.fromMap(doc.data(), doc.id);
-          }).toList();
-        });
+      return snapshot.docs.map((doc) {
+        return NotificationModel.fromMap(doc.data(), doc.id);
+      }).toList();
+    });
   }
 
   /// Mark a notification as read
@@ -791,10 +784,10 @@ class FirebaseService {
         .orderBy('createdAt', descending: true)
         .snapshots()
         .map((snapshot) {
-          return snapshot.docs.map((doc) {
-            return FavoriteModel.fromMap(doc.data(), doc.id);
-          }).toList();
-        });
+      return snapshot.docs.map((doc) {
+        return FavoriteModel.fromMap(doc.data(), doc.id);
+      }).toList();
+    });
   }
 
   /// Check if item is favorited by user

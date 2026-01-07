@@ -5,6 +5,7 @@ import '../../models/transaction.dart';
 import '../../providers/transaction_provider.dart';
 import '../../providers/user_provider.dart';
 import '../../widgets/custom_app_bar.dart';
+import '../../services/firebase_service.dart';
 import 'transaction_detail_screen.dart';
 
 class TransactionHistoryScreen extends StatefulWidget {
@@ -206,10 +207,84 @@ class _TransactionHistoryScreenState extends State<TransactionHistoryScreen> {
 
   Widget _buildTransactionCard(
       TransactionModel transaction, String currentUserId) {
-    final isInitiator = transaction.initiatedBy == currentUserId;
+    return TransactionCard(
+      transaction: transaction,
+      currentUserId: currentUserId,
+    );
+  }
+
+  // ... (keep existing helper methods like _getTypeIcon, _getTypeColor, _formatDate if they are used by other parts, or move them to the new widget if they are only used there)
+  // Actually, _formatDate, _getTypeIcon, etc are used by the card. I should move them or make them static/shared.
+  // To keep it simple, I will copy the logic into the new widget class.
+}
+
+class TransactionCard extends StatefulWidget {
+  final TransactionModel transaction;
+  final String currentUserId;
+
+  const TransactionCard({
+    super.key,
+    required this.transaction,
+    required this.currentUserId,
+  });
+
+  @override
+  State<TransactionCard> createState() => _TransactionCardState();
+}
+
+class _TransactionCardState extends State<TransactionCard> {
+  late String? _initiatedByName;
+  late String? _targetUserName;
+  final FirebaseService _firebaseService = FirebaseService(); // Needs import
+
+  @override
+  void initState() {
+    super.initState();
+    _initiatedByName = widget.transaction.initiatedByName;
+    _targetUserName = widget.transaction.targetUserName;
+    _fetchMissingNames();
+  }
+
+  Future<void> _fetchMissingNames() async {
+    bool needsUpdate = false;
+
+    if (_initiatedByName == null) {
+      try {
+        final user = await _firebaseService
+            .getUserDocument(widget.transaction.initiatedBy);
+        if (user != null) {
+          _initiatedByName = user.name;
+          needsUpdate = true;
+        }
+      } catch (e) {
+        debugPrint('Error fetching initiator name: $e');
+      }
+    }
+
+    if (_targetUserName == null) {
+      try {
+        final user = await _firebaseService
+            .getUserDocument(widget.transaction.targetUser);
+        if (user != null) {
+          _targetUserName = user.name;
+          needsUpdate = true;
+        }
+      } catch (e) {
+        debugPrint('Error fetching target user name: $e');
+      }
+    }
+
+    if (needsUpdate && mounted) {
+      setState(() {});
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final isInitiator = widget.transaction.initiatedBy == widget.currentUserId;
     final otherPartyName = isInitiator
-        ? (transaction.targetUserName ?? 'Loading...')
-        : (transaction.initiatedByName ?? 'Loading...');
+        ? (_targetUserName ?? 'Loading...')
+        : (_initiatedByName ?? 'Loading...');
 
     return Card(
       margin: const EdgeInsets.only(bottom: 12),
@@ -221,7 +296,7 @@ class _TransactionHistoryScreenState extends State<TransactionHistoryScreen> {
             context,
             MaterialPageRoute(
               builder: (context) =>
-                  TransactionDetailScreen(transaction: transaction),
+                  TransactionDetailScreen(transaction: widget.transaction),
             ),
           );
         },
@@ -235,12 +310,13 @@ class _TransactionHistoryScreenState extends State<TransactionHistoryScreen> {
                 width: 48,
                 height: 48,
                 decoration: BoxDecoration(
-                  color: _getTypeColor(transaction.type).withOpacity(0.1),
+                  color:
+                      _getTypeColor(widget.transaction.type).withOpacity(0.1),
                   borderRadius: BorderRadius.circular(12),
                 ),
                 child: Icon(
-                  _getTypeIcon(transaction.type),
-                  color: _getTypeColor(transaction.type),
+                  _getTypeIcon(widget.transaction.type),
+                  color: _getTypeColor(widget.transaction.type),
                 ),
               ),
               const SizedBox(width: 16),
@@ -251,7 +327,7 @@ class _TransactionHistoryScreenState extends State<TransactionHistoryScreen> {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Text(
-                      transaction.relatedName,
+                      widget.transaction.relatedName,
                       style: const TextStyle(
                         fontWeight: FontWeight.bold,
                         fontSize: 16,
@@ -283,7 +359,7 @@ class _TransactionHistoryScreenState extends State<TransactionHistoryScreen> {
                     ),
                     const SizedBox(height: 4),
                     Text(
-                      _formatDate(transaction.createdAt),
+                      _formatDate(widget.transaction.createdAt),
                       style: TextStyle(
                         color: Colors.grey[400],
                         fontSize: 12,
@@ -297,9 +373,9 @@ class _TransactionHistoryScreenState extends State<TransactionHistoryScreen> {
               Column(
                 crossAxisAlignment: CrossAxisAlignment.end,
                 children: [
-                  if (transaction.transactionAmount > 0)
+                  if (widget.transaction.transactionAmount > 0)
                     Text(
-                      '${kCurrencySymbol}${transaction.transactionAmount.toStringAsFixed(0)}',
+                      '${kCurrencySymbol}${widget.transaction.transactionAmount.toStringAsFixed(0)}',
                       style: const TextStyle(
                         fontWeight: FontWeight.bold,
                         fontSize: 16,
@@ -307,7 +383,7 @@ class _TransactionHistoryScreenState extends State<TransactionHistoryScreen> {
                       ),
                     ),
                   const SizedBox(height: 8),
-                  _buildStatusBadge(transaction.status),
+                  _buildStatusBadge(widget.transaction.status),
                 ],
               ),
             ],

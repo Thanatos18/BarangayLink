@@ -650,6 +650,7 @@ class RentalDetailScreen extends StatelessWidget {
             rentalId: rental.id,
             itemName: rental.itemName,
             ownerId: rental.ownerId,
+            ownerName: rental.ownerName,
             renterId: currentUser.uid,
             renterName: currentUser.name,
             barangay: rental.barangay,

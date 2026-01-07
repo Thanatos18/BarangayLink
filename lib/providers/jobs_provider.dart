@@ -83,14 +83,15 @@ class JobsProvider extends ChangeNotifier {
   /// Fetch dynamic categories from Firestore
   Future<void> _fetchCategories() async {
     try {
-      final doc = await _db.collection('app_config').doc('job_categories').get();
+      final doc =
+          await _db.collection('app_config').doc('job_categories').get();
       if (doc.exists && doc.data() != null) {
         final data = doc.data()!;
         if (data['categories'] is List) {
           _categories = List<String>.from(data['categories']);
         }
       }
-      
+
       // If no categories in Firestore, use defaults
       if (_categories.isEmpty) {
         _categories = [
@@ -115,7 +116,14 @@ class JobsProvider extends ChangeNotifier {
       notifyListeners();
     } catch (e) {
       // Use defaults on error
-      _categories = ['Plumbing', 'Electrical', 'Tutoring', 'Cleaning', 'Repair', 'Other'];
+      _categories = [
+        'Plumbing',
+        'Electrical',
+        'Tutoring',
+        'Cleaning',
+        'Repair',
+        'Other'
+      ];
       notifyListeners();
     }
   }
@@ -149,8 +157,8 @@ class JobsProvider extends ChangeNotifier {
   void _applyFilters() {
     _filteredJobs = _allJobs.where((job) {
       // Barangay filter
-      if (_selectedBarangay != null && 
-          _selectedBarangay != 'All Tagum City' && 
+      if (_selectedBarangay != null &&
+          _selectedBarangay != 'All Tagum City' &&
           job.barangay != _selectedBarangay) {
         return false;
       }
@@ -281,6 +289,7 @@ class JobsProvider extends ChangeNotifier {
     required String jobId,
     required String jobTitle,
     required String posterId,
+    required String posterName,
     required String applicantId,
     required String applicantName,
     required String barangay,
@@ -292,6 +301,7 @@ class JobsProvider extends ChangeNotifier {
         jobId,
         jobTitle,
         posterId,
+        posterName,
         applicantId,
         applicantName,
         barangay,

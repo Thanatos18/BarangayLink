@@ -9,10 +9,65 @@ import 'payment_confirmation_screen.dart';
 import 'submit_feedback_screen.dart';
 import '../../widgets/modern_dialog.dart';
 
-class TransactionDetailScreen extends StatelessWidget {
+import '../../services/firebase_service.dart';
+
+class TransactionDetailScreen extends StatefulWidget {
   final TransactionModel transaction;
 
   const TransactionDetailScreen({super.key, required this.transaction});
+
+  @override
+  State<TransactionDetailScreen> createState() =>
+      _TransactionDetailScreenState();
+}
+
+class _TransactionDetailScreenState extends State<TransactionDetailScreen> {
+  late String? _initiatedByName;
+  late String? _targetUserName;
+  final FirebaseService _firebaseService = FirebaseService();
+
+  @override
+  void initState() {
+    super.initState();
+    _initiatedByName = widget.transaction.initiatedByName;
+    _targetUserName = widget.transaction.targetUserName;
+    _fetchMissingNames();
+  }
+
+  Future<void> _fetchMissingNames() async {
+    bool needsUpdate = false;
+
+    if (_initiatedByName == null) {
+      try {
+        final user = await _firebaseService
+            .getUserDocument(widget.transaction.initiatedBy);
+        if (user != null) {
+          _initiatedByName = user.name;
+          needsUpdate = true;
+        }
+      } catch (e) {
+        // Ignore error, will stay as "Loading..." or could set to "Unknown"
+        debugPrint('Error fetching initiator name: $e');
+      }
+    }
+
+    if (_targetUserName == null) {
+      try {
+        final user = await _firebaseService
+            .getUserDocument(widget.transaction.targetUser);
+        if (user != null) {
+          _targetUserName = user.name;
+          needsUpdate = true;
+        }
+      } catch (e) {
+        debugPrint('Error fetching target user name: $e');
+      }
+    }
+
+    if (needsUpdate && mounted) {
+      setState(() {});
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -27,8 +82,8 @@ class TransactionDetailScreen extends StatelessWidget {
       );
     }
 
-    final isInitiator = transaction.initiatedBy == currentUser.uid;
-    final isTarget = transaction.targetUser == currentUser.uid;
+    final isInitiator = widget.transaction.initiatedBy == currentUser.uid;
+    final isTarget = widget.transaction.targetUser == currentUser.uid;
 
     return Scaffold(
       appBar: const CustomAppBar(
@@ -53,7 +108,7 @@ class TransactionDetailScreen extends StatelessWidget {
             const SizedBox(height: 16),
 
             // Amount Card (if has amount)
-            if (transaction.transactionAmount > 0) ...[
+            if (widget.transaction.transactionAmount > 0) ...[
               _buildAmountCard(),
               const SizedBox(height: 16),
             ],
@@ -93,7 +148,7 @@ class TransactionDetailScreen extends StatelessWidget {
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Text(
-                transaction.typeLabel,
+                widget.transaction.typeLabel,
                 style: TextStyle(
                   color: _getTypeColor(),
                   fontWeight: FontWeight.w600,
@@ -102,7 +157,7 @@ class TransactionDetailScreen extends StatelessWidget {
               ),
               const SizedBox(height: 4),
               Text(
-                transaction.relatedName,
+                widget.transaction.relatedName,
                 style: const TextStyle(
                   fontWeight: FontWeight.bold,
                   fontSize: 20,
@@ -135,7 +190,7 @@ class TransactionDetailScreen extends StatelessWidget {
                   ),
                   const SizedBox(height: 4),
                   Text(
-                    transaction.status,
+                    widget.transaction.status,
                     style: TextStyle(
                       fontWeight: FontWeight.bold,
                       fontSize: 18,
@@ -146,14 +201,14 @@ class TransactionDetailScreen extends StatelessWidget {
               ),
             ),
             // Payment Status Badge
-            if (transaction.transactionAmount > 0)
+            if (widget.transaction.transactionAmount > 0)
               Container(
                 padding: const EdgeInsets.symmetric(
                   horizontal: 12,
                   vertical: 6,
                 ),
                 decoration: BoxDecoration(
-                  color: transaction.isPaid
+                  color: widget.transaction.isPaid
                       ? Colors.green.withOpacity(0.1)
                       : Colors.orange.withOpacity(0.1),
                   borderRadius: BorderRadius.circular(20),
@@ -162,16 +217,21 @@ class TransactionDetailScreen extends StatelessWidget {
                   mainAxisSize: MainAxisSize.min,
                   children: [
                     Icon(
-                      transaction.isPaid ? Icons.check_circle : Icons.pending,
+                      widget.transaction.isPaid
+                          ? Icons.check_circle
+                          : Icons.pending,
                       size: 16,
-                      color: transaction.isPaid ? Colors.green : Colors.orange,
+                      color: widget.transaction.isPaid
+                          ? Colors.green
+                          : Colors.orange,
                     ),
                     const SizedBox(width: 4),
                     Text(
-                      transaction.paymentStatus,
+                      widget.transaction.paymentStatus,
                       style: TextStyle(
-                        color:
-                            transaction.isPaid ? Colors.green : Colors.orange,
+                        color: widget.transaction.isPaid
+                            ? Colors.green
+                            : Colors.orange,
                         fontWeight: FontWeight.w600,
                         fontSize: 13,
                       ),
@@ -187,8 +247,8 @@ class TransactionDetailScreen extends StatelessWidget {
 
   Widget _buildDetailsCard(bool isInitiator) {
     final otherPartyName = isInitiator
-        ? (transaction.targetUserName ?? 'Loading...')
-        : (transaction.initiatedByName ?? 'Loading...');
+        ? (_targetUserName ?? 'Loading...')
+        : (_initiatedByName ?? 'Loading...');
 
     return Card(
       elevation: 2,
@@ -212,13 +272,13 @@ class TransactionDetailScreen extends StatelessWidget {
             _buildDetailRow(
               icon: Icons.location_on,
               label: 'Barangay',
-              value: transaction.barangay,
+              value: widget.transaction.barangay,
             ),
             const Divider(height: 24),
             _buildDetailRow(
               icon: Icons.category,
               label: 'Type',
-              value: transaction.typeLabel,
+              value: widget.transaction.typeLabel,
             ),
           ],
         ),
@@ -279,7 +339,7 @@ class TransactionDetailScreen extends StatelessWidget {
               style: TextStyle(fontSize: 16, color: Colors.grey),
             ),
             Text(
-              '$kCurrencySymbol${transaction.transactionAmount.toStringAsFixed(2)}',
+              '$kCurrencySymbol${widget.transaction.transactionAmount.toStringAsFixed(2)}',
               style: const TextStyle(
                 fontWeight: FontWeight.bold,
                 fontSize: 24,
@@ -309,19 +369,19 @@ class TransactionDetailScreen extends StatelessWidget {
             _buildTimelineItem(
               icon: Icons.add_circle,
               label: 'Created',
-              date: transaction.createdAt,
+              date: widget.transaction.createdAt,
               isFirst: true,
             ),
             _buildTimelineItem(
               icon: Icons.update,
               label: 'Last Updated',
-              date: transaction.updatedAt,
+              date: widget.transaction.updatedAt,
             ),
-            if (transaction.completedAt != null)
+            if (widget.transaction.completedAt != null)
               _buildTimelineItem(
                 icon: Icons.check_circle,
                 label: 'Completed',
-                date: transaction.completedAt!,
+                date: widget.transaction.completedAt!,
                 isLast: true,
                 color: Colors.green,
               ),
@@ -385,7 +445,7 @@ class TransactionDetailScreen extends StatelessWidget {
     final List<Widget> buttons = [];
 
     // Target user actions for Pending transactions
-    if (isTarget && transaction.isPending) {
+    if (isTarget && widget.transaction.isPending) {
       buttons.addAll([
         Expanded(
           child: ElevatedButton.icon(
@@ -415,7 +475,7 @@ class TransactionDetailScreen extends StatelessWidget {
     }
 
     // Pay Now button for Accepted transactions
-    if (transaction.isAccepted && !transaction.isPaid) {
+    if (widget.transaction.isAccepted && !widget.transaction.isPaid) {
       buttons.add(
         SizedBox(
           width: double.infinity,
@@ -434,7 +494,7 @@ class TransactionDetailScreen extends StatelessWidget {
     }
 
     // Mark as Completed button for In Progress transactions (initiator only)
-    if (isInitiator && transaction.isInProgress) {
+    if (isInitiator && widget.transaction.isInProgress) {
       buttons.add(
         SizedBox(
           width: double.infinity,
@@ -452,7 +512,7 @@ class TransactionDetailScreen extends StatelessWidget {
     }
 
     // Leave Feedback button for Completed transactions
-    if (transaction.isCompleted) {
+    if (widget.transaction.isCompleted) {
       buttons.add(
         SizedBox(
           width: double.infinity,
@@ -471,7 +531,7 @@ class TransactionDetailScreen extends StatelessWidget {
     }
 
     // Cancel button for Pending transactions (initiator)
-    if (isInitiator && transaction.isPending) {
+    if (isInitiator && widget.transaction.isPending) {
       buttons.add(
         SizedBox(
           width: double.infinity,
@@ -491,7 +551,7 @@ class TransactionDetailScreen extends StatelessWidget {
 
     return Column(
       children: [
-        if (buttons.length == 2 && transaction.isPending && isTarget)
+        if (buttons.length == 2 && widget.transaction.isPending && isTarget)
           Row(children: buttons)
         else
           ...buttons.map(
@@ -510,11 +570,11 @@ class TransactionDetailScreen extends StatelessWidget {
     final confirmed = await _showConfirmDialog(
       context,
       'Accept Transaction',
-      'Are you sure you want to accept this ${transaction.typeLabel.toLowerCase()}?',
+      'Are you sure you want to accept this ${widget.transaction.typeLabel.toLowerCase()}?',
     );
 
     if (confirmed == true) {
-      final success = await provider.acceptTransaction(transaction.id);
+      final success = await provider.acceptTransaction(widget.transaction.id);
       if (context.mounted) {
         if (success) {
           ScaffoldMessenger.of(context).showSnackBar(
@@ -543,12 +603,12 @@ class TransactionDetailScreen extends StatelessWidget {
     final confirmed = await _showConfirmDialog(
       context,
       'Decline Transaction',
-      'Are you sure you want to decline this ${transaction.typeLabel.toLowerCase()}?',
+      'Are you sure you want to decline this ${widget.transaction.typeLabel.toLowerCase()}?',
       isDestructive: true,
     );
 
     if (confirmed == true) {
-      final success = await provider.declineTransaction(transaction.id);
+      final success = await provider.declineTransaction(widget.transaction.id);
       if (context.mounted) {
         if (success) {
           ScaffoldMessenger.of(context).showSnackBar(
@@ -577,12 +637,12 @@ class TransactionDetailScreen extends StatelessWidget {
     final confirmed = await _showConfirmDialog(
       context,
       'Cancel Request',
-      'Are you sure you want to cancel this ${transaction.typeLabel.toLowerCase()}?',
+      'Are you sure you want to cancel this ${widget.transaction.typeLabel.toLowerCase()}?',
       isDestructive: true,
     );
 
     if (confirmed == true) {
-      final success = await provider.cancelTransaction(transaction.id);
+      final success = await provider.cancelTransaction(widget.transaction.id);
       if (context.mounted) {
         if (success) {
           ScaffoldMessenger.of(context).showSnackBar(
@@ -611,11 +671,11 @@ class TransactionDetailScreen extends StatelessWidget {
     final confirmed = await _showConfirmDialog(
       context,
       'Complete Transaction',
-      'Are you sure you want to mark this ${transaction.typeLabel.toLowerCase()} as completed?',
+      'Are you sure you want to mark this ${widget.transaction.typeLabel.toLowerCase()} as completed?',
     );
 
     if (confirmed == true) {
-      final success = await provider.completeTransaction(transaction.id);
+      final success = await provider.completeTransaction(widget.transaction.id);
       if (context.mounted) {
         if (success) {
           ScaffoldMessenger.of(context).showSnackBar(
@@ -642,7 +702,7 @@ class TransactionDetailScreen extends StatelessWidget {
       context,
       MaterialPageRoute(
         builder: (context) =>
-            PaymentConfirmationScreen(transaction: transaction),
+            PaymentConfirmationScreen(transaction: widget.transaction),
       ),
     );
   }
@@ -651,7 +711,8 @@ class TransactionDetailScreen extends StatelessWidget {
     Navigator.push(
       context,
       MaterialPageRoute(
-        builder: (context) => SubmitFeedbackScreen(transaction: transaction),
+        builder: (context) =>
+            SubmitFeedbackScreen(transaction: widget.transaction),
       ),
     );
   }
@@ -678,7 +739,7 @@ class TransactionDetailScreen extends StatelessWidget {
   // --- Helper Methods ---
 
   IconData _getTypeIcon() {
-    switch (transaction.type) {
+    switch (widget.transaction.type) {
       case 'job_application':
         return Icons.work_outline;
       case 'service_booking':
@@ -691,7 +752,7 @@ class TransactionDetailScreen extends StatelessWidget {
   }
 
   Color _getTypeColor() {
-    switch (transaction.type) {
+    switch (widget.transaction.type) {
       case 'job_application':
         return Colors.blue;
       case 'service_booking':
@@ -704,7 +765,7 @@ class TransactionDetailScreen extends StatelessWidget {
   }
 
   IconData _getStatusIcon() {
-    switch (transaction.status) {
+    switch (widget.transaction.status) {
       case 'Pending':
         return Icons.hourglass_empty;
       case 'Accepted':
@@ -721,7 +782,7 @@ class TransactionDetailScreen extends StatelessWidget {
   }
 
   Color _getStatusColor() {
-    switch (transaction.status) {
+    switch (widget.transaction.status) {
       case 'Pending':
         return Colors.orange;
       case 'Accepted':

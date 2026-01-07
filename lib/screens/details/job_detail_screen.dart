@@ -720,6 +720,7 @@ class JobDetailScreen extends StatelessWidget {
             jobId: job.id,
             jobTitle: job.title,
             posterId: job.postedBy,
+            posterName: job.posterName,
             applicantId: currentUser.uid,
             applicantName: currentUser.name,
             barangay: job.barangay,

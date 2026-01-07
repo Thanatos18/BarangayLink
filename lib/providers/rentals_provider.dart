@@ -86,14 +86,15 @@ class RentalsProvider extends ChangeNotifier {
   /// Fetch dynamic categories from Firestore
   Future<void> _fetchCategories() async {
     try {
-      final doc = await _db.collection('app_config').doc('rental_categories').get();
+      final doc =
+          await _db.collection('app_config').doc('rental_categories').get();
       if (doc.exists && doc.data() != null) {
         final data = doc.data()!;
         if (data['categories'] is List) {
           _categories = List<String>.from(data['categories']);
         }
       }
-      
+
       // If no categories in Firestore, use defaults
       if (_categories.isEmpty) {
         _categories = [
@@ -150,8 +151,8 @@ class RentalsProvider extends ChangeNotifier {
   void _applyFilters() {
     _filteredRentals = _allRentals.where((rental) {
       // Barangay filter
-      if (_selectedBarangay != null && 
-          _selectedBarangay != 'All Tagum City' && 
+      if (_selectedBarangay != null &&
+          _selectedBarangay != 'All Tagum City' &&
           rental.barangay != _selectedBarangay) {
         return false;
       }
@@ -167,7 +168,8 @@ class RentalsProvider extends ChangeNotifier {
       }
 
       // Condition filter
-      if (_selectedCondition != null && rental.condition != _selectedCondition) {
+      if (_selectedCondition != null &&
+          rental.condition != _selectedCondition) {
         return false;
       }
 
@@ -292,6 +294,7 @@ class RentalsProvider extends ChangeNotifier {
     required String rentalId,
     required String itemName,
     required String ownerId,
+    required String ownerName,
     required String renterId,
     required String renterName,
     required String barangay,
@@ -304,6 +307,7 @@ class RentalsProvider extends ChangeNotifier {
         rentalId: rentalId,
         itemName: itemName,
         ownerId: ownerId,
+        ownerName: ownerName,
         renterId: renterId,
         renterName: renterName,
         barangay: barangay,

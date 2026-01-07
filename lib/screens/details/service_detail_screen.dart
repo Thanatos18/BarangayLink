@@ -541,6 +541,7 @@ class ServiceDetailScreen extends StatelessWidget {
             serviceId: service.id,
             serviceName: service.name,
             providerId: service.providerId,
+            providerName: service.providerName,
             clientId: currentUser.uid,
             clientName: currentUser.name,
             barangay: service.barangay,

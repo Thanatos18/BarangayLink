@@ -83,14 +83,15 @@ class ServicesProvider extends ChangeNotifier {
   /// Fetch dynamic categories from Firestore
   Future<void> _fetchCategories() async {
     try {
-      final doc = await _db.collection('app_config').doc('service_categories').get();
+      final doc =
+          await _db.collection('app_config').doc('service_categories').get();
       if (doc.exists && doc.data() != null) {
         final data = doc.data()!;
         if (data['categories'] is List) {
           _categories = List<String>.from(data['categories']);
         }
       }
-      
+
       // If no categories in Firestore, use defaults
       if (_categories.isEmpty) {
         _categories = [
@@ -151,8 +152,8 @@ class ServicesProvider extends ChangeNotifier {
   void _applyFilters() {
     _filteredServices = _allServices.where((service) {
       // Barangay filter
-      if (_selectedBarangay != null && 
-          _selectedBarangay != 'All Tagum City' && 
+      if (_selectedBarangay != null &&
+          _selectedBarangay != 'All Tagum City' &&
           service.barangay != _selectedBarangay) {
         return false;
       }
@@ -249,7 +250,8 @@ class ServicesProvider extends ChangeNotifier {
   }
 
   /// Update an existing service
-  Future<void> updateService(String serviceId, Map<String, dynamic> data) async {
+  Future<void> updateService(
+      String serviceId, Map<String, dynamic> data) async {
     _setLoading(true);
     _setError(null);
     try {
@@ -282,6 +284,7 @@ class ServicesProvider extends ChangeNotifier {
     required String serviceId,
     required String serviceName,
     required String providerId,
+    required String providerName,
     required String clientId,
     required String clientName,
     required String barangay,
@@ -294,6 +297,7 @@ class ServicesProvider extends ChangeNotifier {
         serviceId: serviceId,
         serviceName: serviceName,
         providerId: providerId,
+        providerName: providerName,
         clientId: clientId,
         clientName: clientName,
         barangay: barangay,
@@ -318,7 +322,9 @@ class ServicesProvider extends ChangeNotifier {
 
   /// Get services by a specific user
   List<ServiceModel> getServicesByUser(String userId) {
-    return _allServices.where((service) => service.providerId == userId).toList();
+    return _allServices
+        .where((service) => service.providerId == userId)
+        .toList();
   }
 
   @override
