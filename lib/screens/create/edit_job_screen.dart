@@ -4,6 +4,9 @@ import 'package:provider/provider.dart';
 import '../../constants/app_constants.dart';
 import '../../models/job.dart';
 import '../../providers/jobs_provider.dart';
+import 'dart:typed_data';
+import 'package:image_picker/image_picker.dart';
+import '../../services/cloudinary_service.dart';
 
 class EditJobScreen extends StatefulWidget {
   final JobModel job;
@@ -25,6 +28,32 @@ class _EditJobScreenState extends State<EditJobScreen> {
   late String? _selectedBarangay;
   late String _selectedStatus;
   bool _isSubmitting = false;
+
+  Uint8List? _newImageBytes;
+  final ImagePicker _picker = ImagePicker();
+  final CloudinaryService _cloudinaryService = CloudinaryService();
+
+  Future<void> _pickImage() async {
+    try {
+      final XFile? image = await _picker.pickImage(
+        source: ImageSource.gallery,
+        maxWidth: 1024,
+        maxHeight: 1024,
+        imageQuality: 70,
+      );
+      if (image != null) {
+        final bytes = await image.readAsBytes();
+        setState(() {
+          _newImageBytes = bytes;
+        });
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context)
+            .showSnackBar(SnackBar(content: Text('Error picking image: $e')));
+      }
+    }
+  }
 
   @override
   void initState() {
@@ -200,6 +229,60 @@ class _EditJobScreenState extends State<EditJobScreen> {
                 ),
                 textCapitalization: TextCapitalization.sentences,
               ),
+              const SizedBox(height: 16),
+
+              // Image Picker
+              Text('Reference Image',
+                  style: TextStyle(
+                      fontWeight: FontWeight.bold, color: Colors.grey[700])),
+              const SizedBox(height: 8),
+              GestureDetector(
+                onTap: _pickImage,
+                child: Container(
+                  height: 150,
+                  width: double.infinity,
+                  decoration: BoxDecoration(
+                    color: Colors.grey[200],
+                    borderRadius: BorderRadius.circular(12),
+                    border: Border.all(color: Colors.grey[300]!),
+                  ),
+                  clipBehavior: Clip.antiAlias,
+                  child: _newImageBytes != null
+                      ? Image.memory(
+                          _newImageBytes!,
+                          fit: BoxFit.cover,
+                        )
+                      : (widget.job.imageUrls.isNotEmpty
+                          ? Image.network(
+                              widget.job.imageUrls.first,
+                              fit: BoxFit.cover,
+                              errorBuilder: (context, error, stackTrace) =>
+                                  const Center(
+                                      child: Icon(Icons.broken_image,
+                                          color: Colors.grey)),
+                            )
+                          : Column(
+                              mainAxisAlignment: MainAxisAlignment.center,
+                              children: [
+                                const Icon(Icons.add_a_photo,
+                                    size: 40, color: Colors.grey),
+                                const SizedBox(height: 8),
+                                Text('Tap to add photo',
+                                    style: TextStyle(color: Colors.grey[600])),
+                              ],
+                            )),
+                ),
+              ),
+              if (_newImageBytes != null)
+                Align(
+                  alignment: Alignment.centerRight,
+                  child: TextButton.icon(
+                    onPressed: () => setState(() => _newImageBytes = null),
+                    icon: const Icon(Icons.undo, color: Colors.orange),
+                    label: const Text('Revert to original',
+                        style: TextStyle(color: Colors.orange)),
+                  ),
+                ),
               const SizedBox(height: 32),
 
               // Submit button
@@ -350,6 +433,17 @@ class _EditJobScreenState extends State<EditJobScreen> {
         'status': _selectedStatus,
         'updatedAt': Timestamp.now(),
       };
+
+      if (_newImageBytes != null) {
+        final url = await _cloudinaryService.uploadImage(
+          _newImageBytes!,
+          'barangay_jobs',
+          'job_${DateTime.now().millisecondsSinceEpoch}',
+        );
+        if (url != null) {
+          updates['imageUrls'] = [url];
+        }
+      }
 
       await context.read<JobsProvider>().updateJob(widget.job.id, updates);
 
