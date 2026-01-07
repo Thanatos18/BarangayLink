@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../home/home_screen.dart';
 import '../../providers/notification_provider.dart';
+import '../../providers/favorites_provider.dart';
 import '../../providers/user_provider.dart';
 import 'jobs_screen.dart';
 import 'profile_screen.dart';
@@ -42,6 +43,10 @@ class _MainAppScreenState extends State<MainAppScreen> {
       ).currentUser;
       if (user != null) {
         Provider.of<NotificationProvider>(
+          context,
+          listen: false,
+        ).startListening(user.uid);
+        Provider.of<FavoritesProvider>(
           context,
           listen: false,
         ).startListening(user.uid);

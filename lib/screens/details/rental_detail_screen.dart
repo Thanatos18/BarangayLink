@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../../constants/app_constants.dart';
 import '../../models/rental.dart';
+import '../../models/user.dart';
+import '../../services/firebase_service.dart';
 import '../../providers/rentals_provider.dart';
 import '../../providers/user_provider.dart';
 import '../../providers/favorites_provider.dart';
@@ -198,9 +200,8 @@ class RentalDetailScreen extends StatelessWidget {
           Text(
             isAvailable ? 'Available' : 'Rented',
             style: TextStyle(
-              color: isAvailable
-                  ? Colors.green.shade700
-                  : Colors.orange.shade700,
+              color:
+                  isAvailable ? Colors.green.shade700 : Colors.orange.shade700,
               fontWeight: FontWeight.w600,
             ),
           ),
@@ -272,6 +273,37 @@ class RentalDetailScreen extends StatelessWidget {
             icon: Icons.person,
             label: 'Owner',
             value: rental.ownerName,
+          ),
+          // Contact Number (Async fetch)
+          FutureBuilder<UserModel?>(
+            future: FirebaseService().getUserDocument(rental.ownerId),
+            builder: (context, snapshot) {
+              if (snapshot.connectionState == ConnectionState.waiting) {
+                return const Padding(
+                  padding: EdgeInsets.symmetric(vertical: 8.0),
+                  child: Row(
+                    children: [
+                      SizedBox(
+                        width: 20,
+                        height: 20,
+                        child: CircularProgressIndicator(strokeWidth: 2),
+                      ),
+                      SizedBox(width: 12),
+                      Text("Loading contact info...",
+                          style: TextStyle(color: Colors.grey)),
+                    ],
+                  ),
+                );
+              }
+              if (snapshot.hasData && snapshot.data != null) {
+                return _buildDetailRow(
+                  icon: Icons.phone,
+                  label: 'Contact Number',
+                  value: snapshot.data!.contactNumber,
+                );
+              }
+              return const SizedBox.shrink();
+            },
           ),
           // Barangay
           _buildDetailRow(
@@ -526,14 +558,14 @@ class RentalDetailScreen extends StatelessWidget {
 
     try {
       await context.read<RentalsProvider>().requestRental(
-        rentalId: rental.id,
-        itemName: rental.itemName,
-        ownerId: rental.ownerId,
-        renterId: currentUser.uid,
-        renterName: currentUser.name,
-        barangay: rental.barangay,
-        rentPrice: rental.rentPrice,
-      );
+            rentalId: rental.id,
+            itemName: rental.itemName,
+            ownerId: rental.ownerId,
+            renterId: currentUser.uid,
+            renterName: currentUser.name,
+            barangay: rental.barangay,
+            rentPrice: rental.rentPrice,
+          );
 
       if (context.mounted) {
         ScaffoldMessenger.of(context).showSnackBar(

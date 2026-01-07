@@ -393,8 +393,8 @@ class ServiceDetailScreen extends StatelessWidget {
               Navigator.pop(context); // Close dialog
               try {
                 await context.read<ServicesProvider>().deleteService(
-                  service.id,
-                );
+                      service.id,
+                    );
                 if (context.mounted) {
                   Navigator.pop(context); // Return to services list
                   ScaffoldMessenger.of(context).showSnackBar(
@@ -448,14 +448,14 @@ class ServiceDetailScreen extends StatelessWidget {
 
     try {
       await context.read<ServicesProvider>().bookService(
-        serviceId: service.id,
-        serviceName: service.name,
-        providerId: service.providerId,
-        clientId: currentUser.uid,
-        clientName: currentUser.name,
-        barangay: service.barangay,
-        rate: service.rate,
-      );
+            serviceId: service.id,
+            serviceName: service.name,
+            providerId: service.providerId,
+            clientId: currentUser.uid,
+            clientName: currentUser.name,
+            barangay: service.barangay,
+            rate: service.rate,
+          );
 
       if (context.mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
