@@ -42,6 +42,7 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
     return Scaffold(
       appBar: CustomAppBar(
         title: 'Admin Dashboard',
+        showBackButton: true,
         actions: [
           IconButton(
             icon: const Icon(Icons.refresh),

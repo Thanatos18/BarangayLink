@@ -1,8 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:image_picker/image_picker.dart';
-import 'package:firebase_storage/firebase_storage.dart';
-import 'dart:typed_data'; // For web compatibility
+import 'package:cloudinary_public/cloudinary_public.dart';
+import 'dart:convert';
+import 'dart:typed_data';
 import '../../constants/app_constants.dart';
 import '../../providers/user_provider.dart';
 import '../../services/firebase_service.dart';
@@ -30,7 +31,13 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
 
   Future<void> _pickImage() async {
     try {
-      final XFile? image = await _picker.pickImage(source: ImageSource.gallery);
+      // Pick a smaller image to save space in Firestore (since we aren't using Storage)
+      final XFile? image = await _picker.pickImage(
+        source: ImageSource.gallery,
+        maxWidth: 512, // Limit width
+        maxHeight: 512, // Limit height
+        imageQuality: 70, // Compress quality
+      );
       if (image != null) {
         final bytes = await image.readAsBytes();
         setState(() {
@@ -47,20 +54,26 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
     }
   }
 
+  // Adjusted to return Base64 string instead of Storage URL
   Future<String?> _uploadImage(String userId) async {
     if (_selectedImageBytes == null) return null;
 
     try {
-      final storageRef = FirebaseStorage.instance
-          .ref()
-          .child('user_profiles')
-          .child('$userId.jpg');
+      final cloudinary =
+          CloudinaryPublic('dlsnldb6p', 'my_app_preset', cache: false);
 
-      final metadata = SettableMetadata(contentType: 'image/jpeg');
-      await storageRef.putData(_selectedImageBytes!, metadata);
-      return await storageRef.getDownloadURL();
+      CloudinaryResponse response = await cloudinary.uploadFile(
+        CloudinaryFile.fromBytesData(
+          _selectedImageBytes!,
+          identifier: userId,
+          folder: 'user_profiles',
+          resourceType: CloudinaryResourceType.Image,
+        ),
+      );
+
+      return response.secureUrl;
     } catch (e) {
-      throw Exception('Error uploading image: $e');
+      throw Exception('Error uploading to Cloudinary: $e');
     }
   }
 
@@ -265,8 +278,16 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
                 backgroundColor: kPrimaryColor.withOpacity(0.1),
                 backgroundImage: _selectedImageBytes != null
                     ? MemoryImage(_selectedImageBytes!)
-                    : user?.profileImageUrl != null
-                        ? NetworkImage(user!.profileImageUrl!) as ImageProvider
+                    : (user?.profileImageUrl != null &&
+                            user!.profileImageUrl!.isNotEmpty)
+                        ? (user!.profileImageUrl!.startsWith('data:')
+                            ? MemoryImage(
+                                base64Decode(
+                                  user.profileImageUrl!.split(',').last,
+                                ),
+                              )
+                            : NetworkImage(user!.profileImageUrl!)
+                                as ImageProvider)
                         : null,
                 child:
                     _selectedImageBytes == null && user?.profileImageUrl == null

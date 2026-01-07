@@ -36,7 +36,10 @@ class _FeedbackScreenState extends State<FeedbackScreen> {
     final feedbackProvider = Provider.of<FeedbackProvider>(context);
 
     return Scaffold(
-      appBar: CustomAppBar(title: '${widget.userName}\'s Reviews'),
+      appBar: CustomAppBar(
+        title: '${widget.userName}\'s Reviews',
+        showBackButton: true,
+      ),
       body: Column(
         children: [
           // Rating Summary Header
@@ -82,14 +85,14 @@ class _FeedbackScreenState extends State<FeedbackScreen> {
                       starIndex <= provider.averageRating.floor();
                   final isHalfStar =
                       starIndex == provider.averageRating.floor() + 1 &&
-                      provider.averageRating % 1 >= 0.5;
+                          provider.averageRating % 1 >= 0.5;
 
                   return Icon(
                     isFullStar
                         ? Icons.star
                         : isHalfStar
-                        ? Icons.star_half
-                        : Icons.star_border,
+                            ? Icons.star_half
+                            : Icons.star_border,
                     color: kAccentColor,
                     size: 20,
                   );
@@ -142,9 +145,8 @@ class _FeedbackScreenState extends State<FeedbackScreen> {
       children: List.generate(5, (index) {
         final stars = 5 - index;
         final count = distribution[stars] ?? 0;
-        final percentage = provider.totalReviews > 0
-            ? count / provider.totalReviews
-            : 0.0;
+        final percentage =
+            provider.totalReviews > 0 ? count / provider.totalReviews : 0.0;
 
         return Padding(
           padding: const EdgeInsets.symmetric(vertical: 2),

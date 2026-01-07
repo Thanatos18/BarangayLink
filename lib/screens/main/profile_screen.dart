@@ -1,3 +1,4 @@
+import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../../constants/app_constants.dart';
@@ -68,26 +69,6 @@ class _ProfileScreenState extends State<ProfileScreen> {
                 ),
               );
             },
-          ),
-          PopupMenuButton<String>(
-            icon: const Icon(Icons.more_vert),
-            onSelected: (value) {
-              if (value == 'logout') {
-                _showLogoutConfirmation(context, userProvider);
-              }
-            },
-            itemBuilder: (context) => [
-              const PopupMenuItem(
-                value: 'logout',
-                child: Row(
-                  children: [
-                    Icon(Icons.logout, color: Colors.red),
-                    SizedBox(width: 8),
-                    Text('Log Out', style: TextStyle(color: Colors.red)),
-                  ],
-                ),
-              ),
-            ],
           ),
         ],
       ),
@@ -224,19 +205,25 @@ class _ProfileScreenState extends State<ProfileScreen> {
           CircleAvatar(
             radius: 50,
             backgroundColor: kPrimaryColor.withOpacity(0.2),
-            backgroundImage: user.profileImageUrl != null
-                ? NetworkImage(user.profileImageUrl!)
+            backgroundImage: (user.profileImageUrl != null &&
+                    user.profileImageUrl!.isNotEmpty)
+                ? (user.profileImageUrl!.startsWith('data:')
+                    ? MemoryImage(
+                        base64Decode(user.profileImageUrl!.split(',').last),
+                      )
+                    : NetworkImage(user.profileImageUrl!) as ImageProvider)
                 : null,
-            child: user.profileImageUrl == null
-                ? Text(
-                    user.name.isNotEmpty ? user.name[0].toUpperCase() : '?',
-                    style: const TextStyle(
-                      fontSize: 40,
-                      fontWeight: FontWeight.bold,
-                      color: kPrimaryColor,
-                    ),
-                  )
-                : null,
+            child:
+                (user.profileImageUrl == null || user.profileImageUrl!.isEmpty)
+                    ? Text(
+                        user.name.isNotEmpty ? user.name[0].toUpperCase() : '?',
+                        style: const TextStyle(
+                          fontSize: 40,
+                          fontWeight: FontWeight.bold,
+                          color: kPrimaryColor,
+                        ),
+                      )
+                    : null,
           ),
           const SizedBox(height: 16),
           Text(

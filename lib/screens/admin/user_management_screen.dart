@@ -1,3 +1,4 @@
+import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../../constants/app_constants.dart';
@@ -174,8 +175,13 @@ class _UserManagementScreenState extends State<UserManagementScreen> {
               backgroundColor: user.isBanned
                   ? Colors.red.withOpacity(0.1)
                   : kPrimaryColor.withOpacity(0.1),
-              backgroundImage: user.profileImageUrl != null
-                  ? NetworkImage(user.profileImageUrl!)
+              backgroundImage: (user.profileImageUrl != null &&
+                      user.profileImageUrl!.isNotEmpty)
+                  ? (user.profileImageUrl!.startsWith('data:')
+                      ? MemoryImage(
+                          base64Decode(user.profileImageUrl!.split(',').last),
+                        )
+                      : NetworkImage(user.profileImageUrl!) as ImageProvider)
                   : null,
               child: user.profileImageUrl == null
                   ? Text(
