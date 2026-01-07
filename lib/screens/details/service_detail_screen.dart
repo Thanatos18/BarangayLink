@@ -3,10 +3,13 @@ import 'package:provider/provider.dart';
 import '../../constants/app_constants.dart';
 import '../../models/service.dart';
 import '../../providers/services_provider.dart';
+import '../../models/user.dart';
 import '../../providers/user_provider.dart';
 import '../../providers/favorites_provider.dart';
 import '../../models/favorite.dart';
 import '../create/edit_service_screen.dart';
+import '../../providers/reports_provider.dart';
+import '../../models/report.dart';
 
 class ServiceDetailScreen extends StatelessWidget {
   final ServiceModel service;
@@ -67,31 +70,48 @@ class ServiceDetailScreen extends StatelessWidget {
               );
             },
           ),
-          if (canModify)
+          if (currentUser != null)
             PopupMenuButton<String>(
               onSelected: (value) => _handleMenuAction(context, value),
-              itemBuilder: (context) => [
-                const PopupMenuItem(
-                  value: 'edit',
-                  child: Row(
-                    children: [
-                      Icon(Icons.edit, color: Colors.blue),
-                      SizedBox(width: 8),
-                      Text('Edit Service'),
-                    ],
-                  ),
-                ),
-                const PopupMenuItem(
-                  value: 'delete',
-                  child: Row(
-                    children: [
-                      Icon(Icons.delete, color: Colors.red),
-                      SizedBox(width: 8),
-                      Text('Delete Service'),
-                    ],
-                  ),
-                ),
-              ],
+              itemBuilder: (context) {
+                if (canModify) {
+                  return [
+                    const PopupMenuItem(
+                      value: 'edit',
+                      child: Row(
+                        children: [
+                          Icon(Icons.edit, color: Colors.blue),
+                          SizedBox(width: 8),
+                          Text('Edit Service'),
+                        ],
+                      ),
+                    ),
+                    const PopupMenuItem(
+                      value: 'delete',
+                      child: Row(
+                        children: [
+                          Icon(Icons.delete, color: Colors.red),
+                          SizedBox(width: 8),
+                          Text('Delete Service'),
+                        ],
+                      ),
+                    ),
+                  ];
+                } else {
+                  return [
+                    const PopupMenuItem(
+                      value: 'report',
+                      child: Row(
+                        children: [
+                          Icon(Icons.flag, color: Colors.orange),
+                          SizedBox(width: 8),
+                          Text('Report Service'),
+                        ],
+                      ),
+                    ),
+                  ];
+                }
+              },
             ),
         ],
       ),
@@ -387,7 +407,93 @@ class ServiceDetailScreen extends StatelessWidget {
       case 'delete':
         _showDeleteConfirmation(context);
         break;
+      case 'report':
+        final user = context.read<UserProvider>().currentUser;
+        if (user != null) {
+          _showReportDialog(context, user);
+        }
+        break;
     }
+  }
+
+  void _showReportDialog(BuildContext context, UserModel currentUser) {
+    final detailsController = TextEditingController();
+    String selectedReason = ReportReasons.reasons.first;
+
+    showDialog(
+      context: context,
+      builder: (context) => StatefulBuilder(
+        builder: (context, setState) => AlertDialog(
+          title: const Text('Report Service'),
+          content: SingleChildScrollView(
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                const Text('Why are you reporting this service?'),
+                const SizedBox(height: 12),
+                DropdownButtonFormField<String>(
+                  value: selectedReason,
+                  isExpanded: true,
+                  items: ReportReasons.reasons.map((reason) {
+                    return DropdownMenuItem(value: reason, child: Text(reason));
+                  }).toList(),
+                  onChanged: (value) {
+                    if (value != null) {
+                      setState(() => selectedReason = value);
+                    }
+                  },
+                  decoration: const InputDecoration(labelText: 'Reason'),
+                ),
+                const SizedBox(height: 12),
+                TextField(
+                  controller: detailsController,
+                  decoration: const InputDecoration(
+                    labelText: 'Additional Details (Optional)',
+                    alignLabelWithHint: true,
+                  ),
+                  maxLines: 3,
+                ),
+              ],
+            ),
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(context),
+              child: const Text('Cancel'),
+            ),
+            ElevatedButton(
+              onPressed: () async {
+                final success =
+                    await context.read<ReportsProvider>().submitReport(
+                          reportedItemId: service.id,
+                          reportedItemType: 'service',
+                          reportedItemTitle: service.name,
+                          reportedBy: currentUser.uid,
+                          reportedByName: currentUser.name,
+                          reason: selectedReason,
+                          additionalDetails: detailsController.text.trim(),
+                        );
+                if (context.mounted) {
+                  Navigator.pop(context);
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    SnackBar(
+                      content: Text(
+                        success
+                            ? 'Report submitted successfully'
+                            : 'Failed to submit report',
+                      ),
+                      backgroundColor: success ? Colors.green : Colors.red,
+                    ),
+                  );
+                }
+              },
+              child: const Text('Submit Report'),
+            ),
+          ],
+        ),
+      ),
+    );
   }
 
   void _showDeleteConfirmation(BuildContext context) {

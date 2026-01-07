@@ -9,6 +9,8 @@ import '../../providers/user_provider.dart';
 import '../../providers/favorites_provider.dart';
 import '../../models/favorite.dart';
 import '../create/edit_rental_screen.dart';
+import '../../providers/reports_provider.dart';
+import '../../models/report.dart';
 
 class RentalDetailScreen extends StatelessWidget {
   final RentalModel rental;
@@ -69,41 +71,58 @@ class RentalDetailScreen extends StatelessWidget {
               );
             },
           ),
-          if (canModify)
+          if (currentUser != null)
             PopupMenuButton<String>(
               onSelected: (value) => _handleMenuAction(context, value),
-              itemBuilder: (context) => [
-                const PopupMenuItem(
-                  value: 'edit',
-                  child: Row(
-                    children: [
-                      Icon(Icons.edit, color: Colors.blue),
-                      SizedBox(width: 8),
-                      Text('Edit Rental'),
-                    ],
-                  ),
-                ),
-                const PopupMenuItem(
-                  value: 'toggle_availability',
-                  child: Row(
-                    children: [
-                      Icon(Icons.swap_horiz, color: Colors.orange),
-                      SizedBox(width: 8),
-                      Text('Toggle Availability'),
-                    ],
-                  ),
-                ),
-                const PopupMenuItem(
-                  value: 'delete',
-                  child: Row(
-                    children: [
-                      Icon(Icons.delete, color: Colors.red),
-                      SizedBox(width: 8),
-                      Text('Delete Rental'),
-                    ],
-                  ),
-                ),
-              ],
+              itemBuilder: (context) {
+                if (canModify) {
+                  return [
+                    const PopupMenuItem(
+                      value: 'edit',
+                      child: Row(
+                        children: [
+                          Icon(Icons.edit, color: Colors.blue),
+                          SizedBox(width: 8),
+                          Text('Edit Rental'),
+                        ],
+                      ),
+                    ),
+                    const PopupMenuItem(
+                      value: 'toggle_availability',
+                      child: Row(
+                        children: [
+                          Icon(Icons.swap_horiz, color: Colors.orange),
+                          SizedBox(width: 8),
+                          Text('Toggle Availability'),
+                        ],
+                      ),
+                    ),
+                    const PopupMenuItem(
+                      value: 'delete',
+                      child: Row(
+                        children: [
+                          Icon(Icons.delete, color: Colors.red),
+                          SizedBox(width: 8),
+                          Text('Delete Rental'),
+                        ],
+                      ),
+                    ),
+                  ];
+                } else {
+                  return [
+                    const PopupMenuItem(
+                      value: 'report',
+                      child: Row(
+                        children: [
+                          Icon(Icons.flag, color: Colors.orange),
+                          SizedBox(width: 8),
+                          Text('Report Rental'),
+                        ],
+                      ),
+                    ),
+                  ];
+                }
+              },
             ),
         ],
       ),
@@ -473,7 +492,93 @@ class RentalDetailScreen extends StatelessWidget {
       case 'delete':
         _showDeleteConfirmation(context);
         break;
+      case 'report':
+        final user = context.read<UserProvider>().currentUser;
+        if (user != null) {
+          _showReportDialog(context, user);
+        }
+        break;
     }
+  }
+
+  void _showReportDialog(BuildContext context, UserModel currentUser) {
+    final detailsController = TextEditingController();
+    String selectedReason = ReportReasons.reasons.first;
+
+    showDialog(
+      context: context,
+      builder: (context) => StatefulBuilder(
+        builder: (context, setState) => AlertDialog(
+          title: const Text('Report Rental'),
+          content: SingleChildScrollView(
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                const Text('Why are you reporting this rental?'),
+                const SizedBox(height: 12),
+                DropdownButtonFormField<String>(
+                  value: selectedReason,
+                  isExpanded: true,
+                  items: ReportReasons.reasons.map((reason) {
+                    return DropdownMenuItem(value: reason, child: Text(reason));
+                  }).toList(),
+                  onChanged: (value) {
+                    if (value != null) {
+                      setState(() => selectedReason = value);
+                    }
+                  },
+                  decoration: const InputDecoration(labelText: 'Reason'),
+                ),
+                const SizedBox(height: 12),
+                TextField(
+                  controller: detailsController,
+                  decoration: const InputDecoration(
+                    labelText: 'Additional Details (Optional)',
+                    alignLabelWithHint: true,
+                  ),
+                  maxLines: 3,
+                ),
+              ],
+            ),
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(context),
+              child: const Text('Cancel'),
+            ),
+            ElevatedButton(
+              onPressed: () async {
+                final success =
+                    await context.read<ReportsProvider>().submitReport(
+                          reportedItemId: rental.id,
+                          reportedItemType: 'rental',
+                          reportedItemTitle: rental.itemName,
+                          reportedBy: currentUser.uid,
+                          reportedByName: currentUser.name,
+                          reason: selectedReason,
+                          additionalDetails: detailsController.text.trim(),
+                        );
+                if (context.mounted) {
+                  Navigator.pop(context);
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    SnackBar(
+                      content: Text(
+                        success
+                            ? 'Report submitted successfully'
+                            : 'Failed to submit report',
+                      ),
+                      backgroundColor: success ? Colors.green : Colors.red,
+                    ),
+                  );
+                }
+              },
+              child: const Text('Submit Report'),
+            ),
+          ],
+        ),
+      ),
+    );
   }
 
   void _toggleAvailability(BuildContext context) async {
