@@ -30,7 +30,10 @@ class TransactionDetailScreen extends StatelessWidget {
     final isTarget = transaction.targetUser == currentUser.uid;
 
     return Scaffold(
-      appBar: const CustomAppBar(title: 'Transaction Details'),
+      appBar: const CustomAppBar(
+        title: 'Transaction Details',
+        showBackButton: true,
+      ),
       body: SingleChildScrollView(
         padding: const EdgeInsets.all(16),
         child: Column(
@@ -275,7 +278,7 @@ class TransactionDetailScreen extends StatelessWidget {
               style: TextStyle(fontSize: 16, color: Colors.grey),
             ),
             Text(
-              '₱${transaction.transactionAmount.toStringAsFixed(2)}',
+              '$kCurrencySymbol${transaction.transactionAmount.toStringAsFixed(2)}',
               style: const TextStyle(
                 fontWeight: FontWeight.bold,
                 fontSize: 24,
