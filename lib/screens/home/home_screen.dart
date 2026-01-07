@@ -330,7 +330,7 @@ class HomeScreen extends StatelessWidget {
             context,
             icon: Icons.work_outline,
             title: job.title,
-            subtitle: '₱${job.wage.toStringAsFixed(0)}',
+            subtitle: 'Php ${job.wage.toStringAsFixed(0)}',
             color: Colors.blue,
             onTap: () {
               // Navigate to job detail (if available, mostly just nav to tab for now)
@@ -357,7 +357,7 @@ class HomeScreen extends StatelessWidget {
             context,
             icon: Icons.handyman_outlined,
             title: service.name,
-            subtitle: '₱${service.rate.toStringAsFixed(0)}',
+            subtitle: 'Php ${service.rate.toStringAsFixed(0)}',
             color: Colors.orange,
             onTap: () => onNavigate(2),
           );
@@ -381,7 +381,7 @@ class HomeScreen extends StatelessWidget {
             context,
             icon: Icons.home_repair_service_outlined,
             title: rental.itemName,
-            subtitle: '₱${rental.rentPrice.toStringAsFixed(0)}',
+            subtitle: 'Php ${rental.rentPrice.toStringAsFixed(0)}',
             color: Colors.purple,
             onTap: () => onNavigate(3),
           );
