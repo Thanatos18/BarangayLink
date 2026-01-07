@@ -26,6 +26,11 @@ class _MainAppScreenState extends State<MainAppScreen> {
   // List of screens for navigation
   late final List<Widget> _screens;
 
+  // Cache providers to safely dispose them
+  NotificationProvider? _notificationProvider;
+  FavoritesProvider? _favoritesProvider;
+  TransactionProvider? _transactionProvider;
+
   @override
   void initState() {
     super.initState();
@@ -46,6 +51,7 @@ class _MainAppScreenState extends State<MainAppScreen> {
         listen: false,
       ).currentUser;
       if (user != null) {
+        // We can safely access context here in postFrameCallback
         Provider.of<NotificationProvider>(
           context,
           listen: false,
@@ -58,6 +64,17 @@ class _MainAppScreenState extends State<MainAppScreen> {
     });
   }
 
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    // Cache provider references while the widget is still active in the tree
+    _notificationProvider =
+        Provider.of<NotificationProvider>(context, listen: false);
+    _favoritesProvider = Provider.of<FavoritesProvider>(context, listen: false);
+    _transactionProvider =
+        Provider.of<TransactionProvider>(context, listen: false);
+  }
+
   void _navigateToTab(int index) {
     setState(() {
       _currentIndex = index;
@@ -66,16 +83,11 @@ class _MainAppScreenState extends State<MainAppScreen> {
 
   @override
   void dispose() {
-    // Stop listening to avoid memory leaks and permission errors on logout
-    if (mounted) {
-      // Using Read to access providers without listening
-      Provider.of<NotificationProvider>(context, listen: false).stopListening();
-      Provider.of<FavoritesProvider>(context, listen: false).stopListening();
+    // Use cached references to stop listening
+    _notificationProvider?.stopListening();
+    _favoritesProvider?.stopListening();
+    _transactionProvider?.stopListening();
 
-      // Defensively stop other user-dependent providers if they were possibly active
-      Provider.of<TransactionProvider>(context, listen: false).stopListening();
-      // Add others if needed (e.g. AdminProvider, but that might be fine)
-    }
     super.dispose();
   }
 

@@ -34,12 +34,20 @@ class _TransactionHistoryScreenState extends State<TransactionHistoryScreen> {
     }
   }
 
+  // Cache provider reference
+  TransactionProvider? _transactionProvider;
+
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    _transactionProvider =
+        Provider.of<TransactionProvider>(context, listen: false);
+  }
+
   @override
   void dispose() {
-    // Stop listening when screen is closed
-    if (mounted) {
-      Provider.of<TransactionProvider>(context, listen: false).stopListening();
-    }
+    // Stop listening when screen is closed using cached reference
+    _transactionProvider?.stopListening();
     super.dispose();
   }
 

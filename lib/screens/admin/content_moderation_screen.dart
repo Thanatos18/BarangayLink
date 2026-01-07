@@ -28,12 +28,18 @@ class _ContentModerationScreenState extends State<ContentModerationScreen> {
     });
   }
 
+  // Cache provider reference
+  AdminProvider? _adminProvider;
+
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    _adminProvider = Provider.of<AdminProvider>(context, listen: false);
+  }
+
   @override
   void dispose() {
-    if (mounted) {
-      Provider.of<AdminProvider>(context, listen: false)
-          .stopListeningToReports();
-    }
+    _adminProvider?.stopListeningToReports();
     super.dispose();
   }
 
