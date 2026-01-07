@@ -7,6 +7,7 @@ import '../../providers/user_provider.dart';
 import '../../widgets/custom_app_bar.dart';
 import 'payment_confirmation_screen.dart';
 import 'submit_feedback_screen.dart';
+import '../../widgets/modern_dialog.dart';
 
 class TransactionDetailScreen extends StatelessWidget {
   final TransactionModel transaction;
@@ -661,25 +662,16 @@ class TransactionDetailScreen extends StatelessWidget {
     String message, {
     bool isDestructive = false,
   }) {
-    return showDialog<bool>(
-      context: context,
-      builder: (context) => AlertDialog(
-        title: Text(title),
-        content: Text(message),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(context, false),
-            child: const Text('No'),
-          ),
-          ElevatedButton(
-            onPressed: () => Navigator.pop(context, true),
-            style: ElevatedButton.styleFrom(
-              backgroundColor: isDestructive ? Colors.red : kPrimaryColor,
-            ),
-            child: const Text('Yes'),
-          ),
-        ],
-      ),
+    return ModernDialog.show<bool>(
+      context,
+      title: title,
+      description: message,
+      icon: isDestructive ? Icons.warning_amber_rounded : Icons.help_outline,
+      iconColor: isDestructive ? Colors.red : kPrimaryColor,
+      isDestructive: isDestructive,
+      primaryButtonText: 'Yes',
+      onPrimaryPressed: () => Navigator.pop(context, true),
+      secondaryButtonText: 'No',
     );
   }
 

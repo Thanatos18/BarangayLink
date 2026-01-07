@@ -9,6 +9,7 @@ import '../details/job_detail_screen.dart';
 import '../details/service_detail_screen.dart';
 import '../details/rental_detail_screen.dart';
 import '../../constants/app_constants.dart';
+import '../../widgets/modern_dialog.dart';
 
 class FavoritesScreen extends StatefulWidget {
   const FavoritesScreen({super.key});
@@ -149,31 +150,22 @@ class _FavoritesScreenState extends State<FavoritesScreen>
   }
 
   void _confirmRemove(BuildContext context, FavoriteModel favorite) {
-    showDialog(
-      context: context,
-      builder: (context) => AlertDialog(
-        title: const Text('Remove from Favorites?'),
-        content: Text(
-          'Are you sure you want to remove "${favorite.itemTitle}"?',
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(context),
-            child: const Text('Cancel'),
-          ),
-          ElevatedButton(
-            onPressed: () async {
-              Navigator.pop(context);
-              await Provider.of<FavoritesProvider>(
-                context,
-                listen: false,
-              ).toggleFavorite(favorite);
-            },
-            style: ElevatedButton.styleFrom(backgroundColor: Colors.red),
-            child: const Text('Remove'),
-          ),
-        ],
-      ),
+    ModernDialog.show(
+      context,
+      title: 'Remove from Favorites?',
+      description: 'Are you sure you want to remove "${favorite.itemTitle}"?',
+      icon: Icons.delete_forever,
+      iconColor: Colors.red,
+      isDestructive: true,
+      primaryButtonText: 'Remove',
+      onPrimaryPressed: () async {
+        Navigator.pop(context);
+        await Provider.of<FavoritesProvider>(
+          context,
+          listen: false,
+        ).toggleFavorite(favorite);
+      },
+      secondaryButtonText: 'Cancel',
     );
   }
 

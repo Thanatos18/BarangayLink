@@ -14,6 +14,7 @@ import '../admin/admin_dashboard_screen.dart';
 import '../favorites/favorites_screen.dart';
 import '../settings/settings_screen.dart';
 import '../profile/my_listings_screen.dart';
+import '../../widgets/modern_dialog.dart';
 
 class ProfileScreen extends StatefulWidget {
   const ProfileScreen({super.key});
@@ -496,33 +497,23 @@ class _ProfileScreenState extends State<ProfileScreen> {
     BuildContext context,
     UserProvider userProvider,
   ) {
-    showDialog(
-      context: context,
-      builder: (context) => AlertDialog(
-        title: const Text('Log Out'),
-        content: const Text('Are you sure you want to log out?'),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(context),
-            child: const Text('Cancel'),
-          ),
-          ElevatedButton(
-            onPressed: () {
-              Navigator.pop(context);
-              Navigator.of(context).pushAndRemoveUntil(
-                MaterialPageRoute(builder: (context) => const LoginScreen()),
-                (route) => false,
-              );
-              userProvider.logout();
-            },
-            style: ElevatedButton.styleFrom(
-              backgroundColor: Colors.red,
-              foregroundColor: Colors.white,
-            ),
-            child: const Text('Log Out'),
-          ),
-        ],
-      ),
+    ModernDialog.show(
+      context,
+      title: 'Log Out',
+      description: 'Are you sure you want to log out?',
+      icon: Icons.logout,
+      iconColor: Colors.red,
+      isDestructive: true,
+      primaryButtonText: 'Log Out',
+      onPrimaryPressed: () {
+        Navigator.pop(context);
+        Navigator.of(context).pushAndRemoveUntil(
+          MaterialPageRoute(builder: (context) => const LoginScreen()),
+          (route) => false,
+        );
+        userProvider.logout();
+      },
+      secondaryButtonText: 'Cancel',
     );
   }
 

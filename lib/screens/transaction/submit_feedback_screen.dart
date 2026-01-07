@@ -5,6 +5,7 @@ import '../../models/transaction.dart';
 import '../../providers/feedback_provider.dart';
 import '../../providers/user_provider.dart';
 import '../../widgets/custom_app_bar.dart';
+import '../../widgets/modern_dialog.dart';
 
 class SubmitFeedbackScreen extends StatefulWidget {
   final TransactionModel transaction;
@@ -227,12 +228,12 @@ class _SubmitFeedbackScreenState extends State<SubmitFeedbackScreen> {
       child: ElevatedButton(
         onPressed: isValid && !_isSubmitting
             ? () => _submitFeedback(
-                context,
-                reviewerId,
-                reviewerName,
-                reviewedUserId,
-                reviewedUserName,
-              )
+                  context,
+                  reviewerId,
+                  reviewerName,
+                  reviewedUserId,
+                  reviewedUserName,
+                )
             : null,
         style: ElevatedButton.styleFrom(
           backgroundColor: kPrimaryColor,
@@ -298,53 +299,18 @@ class _SubmitFeedbackScreenState extends State<SubmitFeedbackScreen> {
       if (mounted) {
         if (success) {
           // Show success dialog
-          await showDialog(
-            context: context,
-            barrierDismissible: false,
-            builder: (context) => AlertDialog(
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(16),
-              ),
-              content: Column(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  Container(
-                    padding: const EdgeInsets.all(16),
-                    decoration: BoxDecoration(
-                      color: Colors.green.withOpacity(0.1),
-                      shape: BoxShape.circle,
-                    ),
-                    child: const Icon(
-                      Icons.check_circle,
-                      color: Colors.green,
-                      size: 48,
-                    ),
-                  ),
-                  const SizedBox(height: 16),
-                  const Text(
-                    'Feedback Submitted!',
-                    style: TextStyle(fontWeight: FontWeight.bold, fontSize: 18),
-                  ),
-                  const SizedBox(height: 8),
-                  Text(
-                    'Thank you for your feedback.',
-                    style: TextStyle(color: Colors.grey[600]),
-                    textAlign: TextAlign.center,
-                  ),
-                  const SizedBox(height: 20),
-                  SizedBox(
-                    width: double.infinity,
-                    child: ElevatedButton(
-                      onPressed: () {
-                        Navigator.pop(context); // Close dialog
-                        Navigator.pop(context); // Go back to detail
-                      },
-                      child: const Text('Done'),
-                    ),
-                  ),
-                ],
-              ),
-            ),
+          // Show success dialog
+          await ModernDialog.show(
+            context,
+            title: 'Feedback Submitted!',
+            description: 'Thank you for your feedback.',
+            icon: Icons.check_circle,
+            iconColor: Colors.green,
+            primaryButtonText: 'Done',
+            onPrimaryPressed: () {
+              Navigator.pop(context); // Close dialog
+              Navigator.pop(context); // Go back to detail
+            },
           );
         } else {
           ScaffoldMessenger.of(context).showSnackBar(

@@ -6,6 +6,7 @@ import '../../models/user.dart';
 import '../../providers/admin_provider.dart';
 import '../../providers/user_provider.dart';
 import '../../widgets/custom_app_bar.dart';
+import '../../widgets/modern_dialog.dart';
 
 class UserManagementScreen extends StatefulWidget {
   const UserManagementScreen({super.key});
@@ -329,25 +330,17 @@ class _UserManagementScreenState extends State<UserManagementScreen> {
   }
 
   Future<void> _confirmBanUser(UserModel user, AdminProvider provider) async {
-    final confirmed = await showDialog<bool>(
-      context: context,
-      builder: (context) => AlertDialog(
-        title: const Text('Ban User'),
-        content: Text(
+    final confirmed = await ModernDialog.show<bool>(
+      context,
+      title: 'Ban User',
+      description:
           'Are you sure you want to ban ${user.name}? They will not be able to access the app.',
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(context, false),
-            child: const Text('Cancel'),
-          ),
-          ElevatedButton(
-            onPressed: () => Navigator.pop(context, true),
-            style: ElevatedButton.styleFrom(backgroundColor: Colors.red),
-            child: const Text('Ban'),
-          ),
-        ],
-      ),
+      icon: Icons.block,
+      iconColor: Colors.red,
+      isDestructive: true,
+      primaryButtonText: 'Ban',
+      onPrimaryPressed: () => Navigator.pop(context, true),
+      secondaryButtonText: 'Cancel',
     );
 
     if (confirmed == true) {
@@ -366,23 +359,15 @@ class _UserManagementScreenState extends State<UserManagementScreen> {
   }
 
   Future<void> _confirmUnbanUser(UserModel user, AdminProvider provider) async {
-    final confirmed = await showDialog<bool>(
-      context: context,
-      builder: (context) => AlertDialog(
-        title: const Text('Unban User'),
-        content: Text('Are you sure you want to unban ${user.name}?'),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(context, false),
-            child: const Text('Cancel'),
-          ),
-          ElevatedButton(
-            onPressed: () => Navigator.pop(context, true),
-            style: ElevatedButton.styleFrom(backgroundColor: Colors.green),
-            child: const Text('Unban'),
-          ),
-        ],
-      ),
+    final confirmed = await ModernDialog.show<bool>(
+      context,
+      title: 'Unban User',
+      description: 'Are you sure you want to unban ${user.name}?',
+      icon: Icons.check_circle,
+      iconColor: Colors.green,
+      primaryButtonText: 'Unban',
+      onPrimaryPressed: () => Navigator.pop(context, true),
+      secondaryButtonText: 'Cancel',
     );
 
     if (confirmed == true) {

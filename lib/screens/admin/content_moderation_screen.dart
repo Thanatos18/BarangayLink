@@ -6,6 +6,7 @@ import '../../providers/admin_provider.dart';
 import '../../providers/user_provider.dart';
 import '../../widgets/custom_app_bar.dart';
 import 'report_detail_screen.dart';
+import '../../widgets/modern_dialog.dart';
 
 class ContentModerationScreen extends StatefulWidget {
   const ContentModerationScreen({super.key});
@@ -385,24 +386,16 @@ class _ContentModerationScreenState extends State<ContentModerationScreen> {
     String adminUid,
     AdminProvider provider,
   ) async {
-    final confirmed = await showDialog<bool>(
-      context: context,
-      builder: (context) => AlertDialog(
-        title: const Text('Dismiss Report'),
-        content: const Text(
+    final confirmed = await ModernDialog.show<bool>(
+      context,
+      title: 'Dismiss Report',
+      description:
           'Are you sure you want to dismiss this report? No action will be taken.',
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(context, false),
-            child: const Text('Cancel'),
-          ),
-          ElevatedButton(
-            onPressed: () => Navigator.pop(context, true),
-            child: const Text('Dismiss'),
-          ),
-        ],
-      ),
+      icon: Icons.close,
+      iconColor: Colors.grey,
+      primaryButtonText: 'Dismiss',
+      onPrimaryPressed: () => Navigator.pop(context, true),
+      secondaryButtonText: 'Cancel',
     );
 
     if (confirmed == true) {

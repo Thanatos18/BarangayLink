@@ -4,6 +4,7 @@ import '../../constants/app_constants.dart';
 import '../../models/transaction.dart';
 import '../../providers/transaction_provider.dart';
 import '../../widgets/custom_app_bar.dart';
+import '../../widgets/modern_dialog.dart';
 
 class PaymentConfirmationScreen extends StatefulWidget {
   final TransactionModel transaction;
@@ -367,57 +368,19 @@ class _PaymentConfirmationScreenState extends State<PaymentConfirmationScreen> {
       if (mounted) {
         if (success) {
           // Show success dialog
-          await showDialog(
-            context: context,
-            barrierDismissible: false,
-            builder: (context) => AlertDialog(
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(16),
-              ),
-              content: Column(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  Container(
-                    padding: const EdgeInsets.all(16),
-                    decoration: BoxDecoration(
-                      color: Colors.green.withOpacity(0.1),
-                      shape: BoxShape.circle,
-                    ),
-                    child: const Icon(
-                      Icons.check_circle,
-                      color: Colors.green,
-                      size: 48,
-                    ),
-                  ),
-                  const SizedBox(height: 16),
-                  const Text(
-                    'Payment Confirmed!',
-                    style: TextStyle(
-                      fontWeight: FontWeight.bold,
-                      fontSize: 18,
-                    ),
-                  ),
-                  const SizedBox(height: 8),
-                  Text(
-                    'Transaction is now in progress.',
-                    style: TextStyle(color: Colors.grey[600]),
-                    textAlign: TextAlign.center,
-                  ),
-                  const SizedBox(height: 20),
-                  SizedBox(
-                    width: double.infinity,
-                    child: ElevatedButton(
-                      onPressed: () {
-                        Navigator.pop(context); // Close dialog
-                        Navigator.pop(context); // Go back to detail
-                        Navigator.pop(context); // Go back to history
-                      },
-                      child: const Text('Done'),
-                    ),
-                  ),
-                ],
-              ),
-            ),
+          // Show success dialog
+          await ModernDialog.show(
+            context,
+            title: 'Payment Confirmed!',
+            description: 'Transaction is now in progress.',
+            icon: Icons.check_circle,
+            iconColor: Colors.green,
+            primaryButtonText: 'Done',
+            onPrimaryPressed: () {
+              Navigator.pop(context); // Close dialog
+              Navigator.pop(context); // Go back to detail
+              Navigator.pop(context); // Go back to history
+            },
           );
         } else {
           ScaffoldMessenger.of(context).showSnackBar(

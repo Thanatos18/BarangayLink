@@ -3,6 +3,7 @@ import 'package:provider/provider.dart';
 import '../models/report.dart';
 import '../providers/admin_provider.dart';
 import '../providers/user_provider.dart';
+import 'modern_dialog.dart';
 
 /// A reusable dialog for reporting content.
 class ReportDialog extends StatefulWidget {
@@ -51,14 +52,10 @@ class _ReportDialogState extends State<ReportDialog> {
 
   @override
   Widget build(BuildContext context) {
-    return AlertDialog(
-      title: Row(
-        children: [
-          const Icon(Icons.flag, color: Colors.red),
-          const SizedBox(width: 8),
-          const Text('Report Content'),
-        ],
-      ),
+    return ModernDialog(
+      title: 'Report Content',
+      icon: Icons.flag,
+      iconColor: Colors.red,
       content: SingleChildScrollView(
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
@@ -130,28 +127,11 @@ class _ReportDialogState extends State<ReportDialog> {
           ],
         ),
       ),
-      actions: [
-        TextButton(
-          onPressed: () => Navigator.pop(context, false),
-          child: const Text('Cancel'),
-        ),
-        ElevatedButton(
-          onPressed: _selectedReason == null || _isSubmitting
-              ? null
-              : _submitReport,
-          style: ElevatedButton.styleFrom(backgroundColor: Colors.red),
-          child: _isSubmitting
-              ? const SizedBox(
-                  width: 16,
-                  height: 16,
-                  child: CircularProgressIndicator(
-                    strokeWidth: 2,
-                    color: Colors.white,
-                  ),
-                )
-              : const Text('Submit Report'),
-        ),
-      ],
+      secondaryButtonText: 'Cancel',
+      primaryButtonText: _isSubmitting ? 'Submitting...' : 'Submit Report',
+      onPrimaryPressed:
+          (_selectedReason == null || _isSubmitting) ? null : _submitReport,
+      isDestructive: true,
     );
   }
 
@@ -171,9 +151,8 @@ class _ReportDialogState extends State<ReportDialog> {
       reportedBy: currentUser.uid,
       reportedByName: currentUser.name,
       reason: _selectedReason!,
-      additionalDetails: _detailsController.text.isNotEmpty
-          ? _detailsController.text
-          : null,
+      additionalDetails:
+          _detailsController.text.isNotEmpty ? _detailsController.text : null,
     );
 
     if (mounted) {

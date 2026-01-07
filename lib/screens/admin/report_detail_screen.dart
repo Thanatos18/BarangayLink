@@ -9,6 +9,7 @@ import '../../providers/admin_provider.dart';
 import '../../providers/user_provider.dart';
 import '../../services/firebase_service.dart';
 import '../../widgets/custom_app_bar.dart';
+import '../../widgets/modern_dialog.dart';
 
 class ReportDetailScreen extends StatefulWidget {
   final ReportModel report;
@@ -419,25 +420,17 @@ class _ReportDetailScreenState extends State<ReportDetailScreen> {
   }
 
   Future<void> _confirmDelete(AdminProvider provider, String adminUid) async {
-    final confirmed = await showDialog<bool>(
-      context: context,
-      builder: (context) => AlertDialog(
-        title: const Text('Delete Content?'),
-        content: const Text(
+    final confirmed = await ModernDialog.show<bool>(
+      context,
+      title: 'Delete Content?',
+      description:
           'This will permanently remove the content. This action cannot be undone.',
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(context, false),
-            child: const Text('Cancel'),
-          ),
-          ElevatedButton(
-            onPressed: () => Navigator.pop(context, true),
-            style: ElevatedButton.styleFrom(backgroundColor: Colors.red),
-            child: const Text('Delete'),
-          ),
-        ],
-      ),
+      icon: Icons.delete_forever,
+      iconColor: Colors.red,
+      isDestructive: true,
+      primaryButtonText: 'Delete',
+      onPrimaryPressed: () => Navigator.pop(context, true),
+      secondaryButtonText: 'Cancel',
     );
 
     if (confirmed == true) {
