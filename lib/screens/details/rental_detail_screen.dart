@@ -166,7 +166,7 @@ class RentalDetailScreen extends StatelessWidget {
                 const Icon(Icons.payments, color: kPrimaryColor, size: 28),
                 const SizedBox(width: 8),
                 Text(
-                  '₱${rental.rentPrice.toStringAsFixed(0)}/day',
+                  '$kCurrencySymbol${rental.rentPrice.toStringAsFixed(0)}/day',
                   style: const TextStyle(
                     fontSize: 28,
                     fontWeight: FontWeight.bold,

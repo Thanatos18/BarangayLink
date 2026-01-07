@@ -148,7 +148,7 @@ class ServiceDetailScreen extends StatelessWidget {
                 const Icon(Icons.payments, color: kPrimaryColor, size: 28),
                 const SizedBox(width: 8),
                 Text(
-                  '₱${service.rate.toStringAsFixed(0)}/hr',
+                  '$kCurrencySymbol${service.rate.toStringAsFixed(0)}/hr',
                   style: const TextStyle(
                     fontSize: 28,
                     fontWeight: FontWeight.bold,

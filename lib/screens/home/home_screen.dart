@@ -113,7 +113,7 @@ class HomeScreen extends StatelessWidget {
                       ),
                       CircleAvatar(
                         radius: 24,
-                        backgroundColor: Colors.white.withValues(alpha: 0.2),
+                        backgroundColor: Colors.white.withOpacity(0.2),
                         child: Text(
                           firstName[0],
                           style: const TextStyle(

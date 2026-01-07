@@ -299,7 +299,7 @@ class _TransactionHistoryScreenState extends State<TransactionHistoryScreen> {
                 children: [
                   if (transaction.transactionAmount > 0)
                     Text(
-                      '₱${transaction.transactionAmount.toStringAsFixed(0)}',
+                      '${kCurrencySymbol}${transaction.transactionAmount.toStringAsFixed(0)}',
                       style: const TextStyle(
                         fontWeight: FontWeight.bold,
                         fontSize: 16,

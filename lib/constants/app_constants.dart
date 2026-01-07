@@ -8,7 +8,11 @@ const Color kBackgroundColor = Color(0xFFF8FBF9); // Very light mint/grey
 const Color kSurfaceColor = Colors.white;
 const Color kErrorColor = Color(0xFFBA1A1A);
 const Color kTextPrimary = Color(0xFF191C1A);
+
 const Color kTextSecondary = Color(0xFF414943);
+
+// Currency
+const String kCurrencySymbol = 'PHP ';
 
 // List of all 23 Tagum City Barangays for dropdowns
 // Renamed to lowerCamelCase to satisfy linter

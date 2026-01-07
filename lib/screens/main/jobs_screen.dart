@@ -81,8 +81,7 @@ class _JobsScreenState extends State<JobsScreen> {
 
   Widget _buildFilterToggle() {
     final jobsProvider = context.watch<JobsProvider>();
-    final hasActiveFilters =
-        jobsProvider.selectedBarangay != null ||
+    final hasActiveFilters = jobsProvider.selectedBarangay != null ||
         jobsProvider.selectedCategory != null ||
         jobsProvider.selectedStatus != null;
 
@@ -379,7 +378,7 @@ class _JobsScreenState extends State<JobsScreen> {
                   Icon(Icons.payments, size: 16, color: kPrimaryColor),
                   const SizedBox(width: 4),
                   Text(
-                    '₱${job.wage.toStringAsFixed(0)}',
+                    '$kCurrencySymbol${job.wage.toStringAsFixed(0)}',
                     style: const TextStyle(
                       fontWeight: FontWeight.bold,
                       color: kPrimaryColor,

@@ -69,7 +69,8 @@ class _CreateRentalScreenState extends State<CreateRentalScreen> {
                 decoration: BoxDecoration(
                   color: kPrimaryColor.withValues(alpha: 0.1),
                   borderRadius: BorderRadius.circular(12),
-                  border: Border.all(color: kPrimaryColor.withValues(alpha: 0.3)),
+                  border:
+                      Border.all(color: kPrimaryColor.withValues(alpha: 0.3)),
                 ),
                 child: Row(
                   children: [
@@ -136,7 +137,8 @@ class _CreateRentalScreenState extends State<CreateRentalScreen> {
               Align(
                 alignment: Alignment.centerRight,
                 child: TextButton.icon(
-                  onPressed: () => _showAddCategoryDialog(context, rentalsProvider),
+                  onPressed: () =>
+                      _showAddCategoryDialog(context, rentalsProvider),
                   icon: const Icon(Icons.add, size: 18),
                   label: const Text('Add New Category'),
                   style: TextButton.styleFrom(
@@ -173,10 +175,10 @@ class _CreateRentalScreenState extends State<CreateRentalScreen> {
               TextFormField(
                 controller: _rentPriceController,
                 decoration: const InputDecoration(
-                  labelText: 'Rent Price (₱ per day) *',
+                  labelText: 'Rent Price (PHP per day) *',
                   hintText: 'e.g., 100',
                   prefixIcon: Icon(Icons.payments),
-                  prefixText: '₱ ',
+                  prefixText: kCurrencySymbol,
                 ),
                 keyboardType: TextInputType.number,
                 validator: (value) {
@@ -300,7 +302,8 @@ class _CreateRentalScreenState extends State<CreateRentalScreen> {
     );
   }
 
-  void _showAddCategoryDialog(BuildContext context, RentalsProvider rentalsProvider) {
+  void _showAddCategoryDialog(
+      BuildContext context, RentalsProvider rentalsProvider) {
     final controller = TextEditingController();
 
     showDialog(

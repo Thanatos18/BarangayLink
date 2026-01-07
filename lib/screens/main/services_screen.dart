@@ -84,8 +84,7 @@ class _ServicesScreenState extends State<ServicesScreen> {
 
   Widget _buildFilterToggle() {
     final servicesProvider = context.watch<ServicesProvider>();
-    final hasActiveFilters =
-        servicesProvider.selectedBarangay != null ||
+    final hasActiveFilters = servicesProvider.selectedBarangay != null ||
         servicesProvider.selectedCategory != null ||
         servicesProvider.showAvailableOnly == true;
 
@@ -398,7 +397,7 @@ class _ServicesScreenState extends State<ServicesScreen> {
                   Icon(Icons.payments, size: 16, color: kPrimaryColor),
                   const SizedBox(width: 4),
                   Text(
-                    '₱${service.rate.toStringAsFixed(0)}/hr',
+                    '$kCurrencySymbol${service.rate.toStringAsFixed(0)}/hr',
                     style: const TextStyle(
                       fontWeight: FontWeight.bold,
                       color: kPrimaryColor,

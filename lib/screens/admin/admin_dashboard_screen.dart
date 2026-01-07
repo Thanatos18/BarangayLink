@@ -112,12 +112,15 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
                 size: 28,
               ),
               const SizedBox(width: 12),
-              Text(
-                'Welcome, $adminName',
-                style: const TextStyle(
-                  color: Colors.white,
-                  fontSize: 20,
-                  fontWeight: FontWeight.bold,
+              Expanded(
+                child: Text(
+                  'Welcome, $adminName',
+                  style: const TextStyle(
+                    color: Colors.white,
+                    fontSize: 20,
+                    fontWeight: FontWeight.bold,
+                  ),
+                  overflow: TextOverflow.ellipsis,
                 ),
               ),
             ],
@@ -285,10 +288,8 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
   }
 
   Widget _buildPendingReportsSection(AdminProvider provider) {
-    final pendingReports = provider.reports
-        .where((r) => r.isPending)
-        .take(5)
-        .toList();
+    final pendingReports =
+        provider.reports.where((r) => r.isPending).take(5).toList();
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,

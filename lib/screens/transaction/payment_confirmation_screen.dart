@@ -11,7 +11,8 @@ class PaymentConfirmationScreen extends StatefulWidget {
   const PaymentConfirmationScreen({super.key, required this.transaction});
 
   @override
-  State<PaymentConfirmationScreen> createState() => _PaymentConfirmationScreenState();
+  State<PaymentConfirmationScreen> createState() =>
+      _PaymentConfirmationScreenState();
 }
 
 class _PaymentConfirmationScreenState extends State<PaymentConfirmationScreen> {

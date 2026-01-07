@@ -31,9 +31,12 @@ class _EditServiceScreenState extends State<EditServiceScreen> {
     super.initState();
     // Pre-fill with existing service data
     _nameController = TextEditingController(text: widget.service.name);
-    _descriptionController = TextEditingController(text: widget.service.description);
-    _rateController = TextEditingController(text: widget.service.rate.toStringAsFixed(0));
-    _contactController = TextEditingController(text: widget.service.contactNumber);
+    _descriptionController =
+        TextEditingController(text: widget.service.description);
+    _rateController =
+        TextEditingController(text: widget.service.rate.toStringAsFixed(0));
+    _contactController =
+        TextEditingController(text: widget.service.contactNumber);
     _selectedCategory = widget.service.category;
     _selectedBarangay = widget.service.barangay;
     _isAvailable = widget.service.isAvailable;
@@ -143,10 +146,10 @@ class _EditServiceScreenState extends State<EditServiceScreen> {
               TextFormField(
                 controller: _rateController,
                 decoration: const InputDecoration(
-                  labelText: 'Rate (₱ per hour) *',
+                  labelText: 'Rate (PHP per hour) *',
                   hintText: 'e.g., 150',
                   prefixIcon: Icon(Icons.payments),
-                  prefixText: '₱ ',
+                  prefixText: kCurrencySymbol,
                 ),
                 keyboardType: TextInputType.number,
                 validator: (value) {
@@ -268,9 +271,7 @@ class _EditServiceScreenState extends State<EditServiceScreen> {
     return Container(
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: _isAvailable 
-            ? Colors.green.shade50 
-            : Colors.grey.shade100,
+        color: _isAvailable ? Colors.green.shade50 : Colors.grey.shade100,
         borderRadius: BorderRadius.circular(12),
         border: Border.all(
           color: _isAvailable ? Colors.green.shade300 : Colors.grey.shade300,
@@ -293,12 +294,14 @@ class _EditServiceScreenState extends State<EditServiceScreen> {
                   style: TextStyle(
                     fontWeight: FontWeight.bold,
                     fontSize: 16,
-                    color: _isAvailable ? Colors.green.shade700 : Colors.grey.shade700,
+                    color: _isAvailable
+                        ? Colors.green.shade700
+                        : Colors.grey.shade700,
                   ),
                 ),
                 Text(
-                  _isAvailable 
-                      ? 'Customers can book your service' 
+                  _isAvailable
+                      ? 'Customers can book your service'
                       : 'Service is currently unavailable',
                   style: TextStyle(
                     color: Colors.grey.shade600,
@@ -341,7 +344,9 @@ class _EditServiceScreenState extends State<EditServiceScreen> {
         'updatedAt': Timestamp.now(),
       };
 
-      await context.read<ServicesProvider>().updateService(widget.service.id, updates);
+      await context
+          .read<ServicesProvider>()
+          .updateService(widget.service.id, updates);
 
       if (context.mounted) {
         ScaffoldMessenger.of(context).showSnackBar(

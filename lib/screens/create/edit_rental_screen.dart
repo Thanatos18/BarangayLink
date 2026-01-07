@@ -31,8 +31,10 @@ class _EditRentalScreenState extends State<EditRentalScreen> {
     super.initState();
     // Pre-fill with existing rental data
     _itemNameController = TextEditingController(text: widget.rental.itemName);
-    _descriptionController = TextEditingController(text: widget.rental.description);
-    _rentPriceController = TextEditingController(text: widget.rental.rentPrice.toStringAsFixed(0));
+    _descriptionController =
+        TextEditingController(text: widget.rental.description);
+    _rentPriceController =
+        TextEditingController(text: widget.rental.rentPrice.toStringAsFixed(0));
     _selectedCategory = widget.rental.category;
     _selectedBarangay = widget.rental.barangay;
     _selectedCondition = widget.rental.condition;
@@ -142,10 +144,10 @@ class _EditRentalScreenState extends State<EditRentalScreen> {
               TextFormField(
                 controller: _rentPriceController,
                 decoration: const InputDecoration(
-                  labelText: 'Rent Price (₱ per day) *',
+                  labelText: 'Rent Price (PHP per day) *',
                   hintText: 'e.g., 100',
                   prefixIcon: Icon(Icons.payments),
-                  prefixText: '₱ ',
+                  prefixText: kCurrencySymbol,
                 ),
                 keyboardType: TextInputType.number,
                 validator: (value) {
@@ -267,9 +269,7 @@ class _EditRentalScreenState extends State<EditRentalScreen> {
     return Container(
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: _isAvailable 
-            ? Colors.green.shade50 
-            : Colors.orange.shade50,
+        color: _isAvailable ? Colors.green.shade50 : Colors.orange.shade50,
         borderRadius: BorderRadius.circular(12),
         border: Border.all(
           color: _isAvailable ? Colors.green.shade300 : Colors.orange.shade300,
@@ -292,12 +292,14 @@ class _EditRentalScreenState extends State<EditRentalScreen> {
                   style: TextStyle(
                     fontWeight: FontWeight.bold,
                     fontSize: 16,
-                    color: _isAvailable ? Colors.green.shade700 : Colors.orange.shade700,
+                    color: _isAvailable
+                        ? Colors.green.shade700
+                        : Colors.orange.shade700,
                   ),
                 ),
                 Text(
-                  _isAvailable 
-                      ? 'Others can request to rent this item' 
+                  _isAvailable
+                      ? 'Others can request to rent this item'
                       : 'Item is currently rented out',
                   style: TextStyle(
                     color: Colors.grey.shade600,
@@ -340,7 +342,9 @@ class _EditRentalScreenState extends State<EditRentalScreen> {
         'updatedAt': Timestamp.now(),
       };
 
-      await context.read<RentalsProvider>().updateRental(widget.rental.id, updates);
+      await context
+          .read<RentalsProvider>()
+          .updateRental(widget.rental.id, updates);
 
       if (context.mounted) {
         ScaffoldMessenger.of(context).showSnackBar(

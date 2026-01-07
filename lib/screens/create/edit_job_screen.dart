@@ -31,8 +31,10 @@ class _EditJobScreenState extends State<EditJobScreen> {
     super.initState();
     // Pre-fill with existing job data
     _titleController = TextEditingController(text: widget.job.title);
-    _descriptionController = TextEditingController(text: widget.job.description);
-    _wageController = TextEditingController(text: widget.job.wage.toStringAsFixed(0));
+    _descriptionController =
+        TextEditingController(text: widget.job.description);
+    _wageController =
+        TextEditingController(text: widget.job.wage.toStringAsFixed(0));
     _locationController = TextEditingController(text: widget.job.location);
     _selectedCategory = widget.job.category;
     _selectedBarangay = widget.job.barangay;
@@ -143,10 +145,10 @@ class _EditJobScreenState extends State<EditJobScreen> {
               TextFormField(
                 controller: _wageController,
                 decoration: const InputDecoration(
-                  labelText: 'Wage (₱) *',
+                  labelText: 'Wage / Payment (PHP) *',
                   hintText: 'e.g., 500',
                   prefixIcon: Icon(Icons.payments),
-                  prefixText: '₱ ',
+                  prefixText: kCurrencySymbol,
                 ),
                 keyboardType: TextInputType.number,
                 validator: (value) {
@@ -282,16 +284,24 @@ class _EditJobScreenState extends State<EditJobScreen> {
 
               switch (status) {
                 case 'Open':
-                  bgColor = isSelected ? Colors.green.shade100 : Colors.grey.shade200;
-                  textColor = isSelected ? Colors.green.shade700 : Colors.grey.shade600;
+                  bgColor =
+                      isSelected ? Colors.green.shade100 : Colors.grey.shade200;
+                  textColor =
+                      isSelected ? Colors.green.shade700 : Colors.grey.shade600;
                   break;
                 case 'In Progress':
-                  bgColor = isSelected ? Colors.orange.shade100 : Colors.grey.shade200;
-                  textColor = isSelected ? Colors.orange.shade700 : Colors.grey.shade600;
+                  bgColor = isSelected
+                      ? Colors.orange.shade100
+                      : Colors.grey.shade200;
+                  textColor = isSelected
+                      ? Colors.orange.shade700
+                      : Colors.grey.shade600;
                   break;
                 case 'Completed':
-                  bgColor = isSelected ? Colors.blue.shade100 : Colors.grey.shade200;
-                  textColor = isSelected ? Colors.blue.shade700 : Colors.grey.shade600;
+                  bgColor =
+                      isSelected ? Colors.blue.shade100 : Colors.grey.shade200;
+                  textColor =
+                      isSelected ? Colors.blue.shade700 : Colors.grey.shade600;
                   break;
                 default:
                   bgColor = Colors.grey.shade200;

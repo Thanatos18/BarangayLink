@@ -71,7 +71,8 @@ class _CreateServiceScreenState extends State<CreateServiceScreen> {
                 decoration: BoxDecoration(
                   color: kPrimaryColor.withValues(alpha: 0.1),
                   borderRadius: BorderRadius.circular(12),
-                  border: Border.all(color: kPrimaryColor.withValues(alpha: 0.3)),
+                  border:
+                      Border.all(color: kPrimaryColor.withValues(alpha: 0.3)),
                 ),
                 child: Row(
                   children: [
@@ -138,7 +139,8 @@ class _CreateServiceScreenState extends State<CreateServiceScreen> {
               Align(
                 alignment: Alignment.centerRight,
                 child: TextButton.icon(
-                  onPressed: () => _showAddCategoryDialog(context, servicesProvider),
+                  onPressed: () =>
+                      _showAddCategoryDialog(context, servicesProvider),
                   icon: const Icon(Icons.add, size: 18),
                   label: const Text('Add New Category'),
                   style: TextButton.styleFrom(
@@ -175,10 +177,10 @@ class _CreateServiceScreenState extends State<CreateServiceScreen> {
               TextFormField(
                 controller: _rateController,
                 decoration: const InputDecoration(
-                  labelText: 'Rate (₱ per hour) *',
-                  hintText: 'e.g., 150',
+                  labelText: 'Rate (PHP per hour) *',
+                  hintText: 'e.g., 500',
                   prefixIcon: Icon(Icons.payments),
-                  prefixText: '₱ ',
+                  prefixText: kCurrencySymbol,
                 ),
                 keyboardType: TextInputType.number,
                 validator: (value) {
@@ -302,7 +304,8 @@ class _CreateServiceScreenState extends State<CreateServiceScreen> {
     );
   }
 
-  void _showAddCategoryDialog(BuildContext context, ServicesProvider servicesProvider) {
+  void _showAddCategoryDialog(
+      BuildContext context, ServicesProvider servicesProvider) {
     final controller = TextEditingController();
 
     showDialog(

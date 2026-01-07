@@ -81,8 +81,7 @@ class _RentalsScreenState extends State<RentalsScreen> {
 
   Widget _buildFilterToggle() {
     final rentalsProvider = context.watch<RentalsProvider>();
-    final hasActiveFilters =
-        rentalsProvider.selectedBarangay != null ||
+    final hasActiveFilters = rentalsProvider.selectedBarangay != null ||
         rentalsProvider.selectedCategory != null ||
         rentalsProvider.showAvailableOnly == true ||
         rentalsProvider.selectedCondition != null;
@@ -424,7 +423,7 @@ class _RentalsScreenState extends State<RentalsScreen> {
                   Icon(Icons.payments, size: 16, color: kPrimaryColor),
                   const SizedBox(width: 4),
                   Text(
-                    '₱${rental.rentPrice.toStringAsFixed(0)}/day',
+                    '$kCurrencySymbol${rental.rentPrice.toStringAsFixed(0)}/day',
                     style: const TextStyle(
                       fontWeight: FontWeight.bold,
                       color: kPrimaryColor,

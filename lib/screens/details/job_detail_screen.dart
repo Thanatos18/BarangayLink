@@ -162,7 +162,7 @@ class JobDetailScreen extends StatelessWidget {
                 const Icon(Icons.payments, color: kPrimaryColor, size: 28),
                 const SizedBox(width: 8),
                 Text(
-                  '₱${job.wage.toStringAsFixed(0)}',
+                  '$kCurrencySymbol${job.wage.toStringAsFixed(0)}',
                   style: const TextStyle(
                     fontSize: 28,
                     fontWeight: FontWeight.bold,

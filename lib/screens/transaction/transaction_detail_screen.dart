@@ -166,9 +166,8 @@ class TransactionDetailScreen extends StatelessWidget {
                     Text(
                       transaction.paymentStatus,
                       style: TextStyle(
-                        color: transaction.isPaid
-                            ? Colors.green
-                            : Colors.orange,
+                        color:
+                            transaction.isPaid ? Colors.green : Colors.orange,
                         fontWeight: FontWeight.w600,
                         fontSize: 13,
                       ),

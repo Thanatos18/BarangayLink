@@ -69,7 +69,8 @@ class _CreateJobScreenState extends State<CreateJobScreen> {
                 decoration: BoxDecoration(
                   color: kPrimaryColor.withValues(alpha: 0.1),
                   borderRadius: BorderRadius.circular(12),
-                  border: Border.all(color: kPrimaryColor.withValues(alpha: 0.3)),
+                  border:
+                      Border.all(color: kPrimaryColor.withValues(alpha: 0.3)),
                 ),
                 child: Row(
                   children: [
@@ -136,7 +137,8 @@ class _CreateJobScreenState extends State<CreateJobScreen> {
               Align(
                 alignment: Alignment.centerRight,
                 child: TextButton.icon(
-                  onPressed: () => _showAddCategoryDialog(context, jobsProvider),
+                  onPressed: () =>
+                      _showAddCategoryDialog(context, jobsProvider),
                   icon: const Icon(Icons.add, size: 18),
                   label: const Text('Add New Category'),
                   style: TextButton.styleFrom(
@@ -173,10 +175,10 @@ class _CreateJobScreenState extends State<CreateJobScreen> {
               TextFormField(
                 controller: _wageController,
                 decoration: const InputDecoration(
-                  labelText: 'Wage (₱) *',
+                  labelText: 'Wage / Payment (PHP) *',
                   hintText: 'e.g., 500',
                   prefixIcon: Icon(Icons.payments),
-                  prefixText: '₱ ',
+                  prefixText: kCurrencySymbol,
                 ),
                 keyboardType: TextInputType.number,
                 validator: (value) {
