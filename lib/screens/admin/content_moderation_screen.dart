@@ -29,6 +29,15 @@ class _ContentModerationScreenState extends State<ContentModerationScreen> {
   }
 
   @override
+  void dispose() {
+    if (mounted) {
+      Provider.of<AdminProvider>(context, listen: false)
+          .stopListeningToReports();
+    }
+    super.dispose();
+  }
+
+  @override
   Widget build(BuildContext context) {
     final userProvider = Provider.of<UserProvider>(context);
     final adminProvider = Provider.of<AdminProvider>(context);

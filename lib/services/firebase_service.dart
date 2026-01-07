@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import '../models/user.dart';
 import '../models/job.dart';
@@ -11,6 +12,8 @@ import '../models/favorite.dart';
 
 class FirebaseService {
   final FirebaseFirestore _db = FirebaseFirestore.instance;
+
+// ... (existing code matches)
 
   // --- USER METHODS ---
 
@@ -343,8 +346,13 @@ class FirebaseService {
   }
 
   /// Stream all transactions where the user is either initiator or target.
+
   /// This merges two queries into a single stream.
   Stream<List<TransactionModel>> getUserTransactionsStream(String userId) {
+    StreamController<List<TransactionModel>> controller = StreamController();
+    List<TransactionModel> initiatedTransactions = [];
+    List<TransactionModel> targetTransactions = [];
+
     // Query for transactions initiated by user
     final initiatedQuery = _db
         .collection('barangay_transactions')
@@ -359,27 +367,49 @@ class FirebaseService {
         .orderBy('createdAt', descending: true)
         .snapshots();
 
-    // Combine both streams
-    return initiatedQuery.asyncMap((initiatedSnapshot) async {
-      final targetSnapshot = await targetQuery.first;
+    StreamSubscription? s1;
+    StreamSubscription? s2;
 
-      // Collect all transactions, using a Set to avoid duplicates
+    void emitCombined() {
+      if (controller.isClosed) return;
+
       final Map<String, TransactionModel> transactionsMap = {};
 
-      for (var doc in initiatedSnapshot.docs) {
-        transactionsMap[doc.id] = TransactionModel.fromMap(doc.data(), doc.id);
+      for (var t in initiatedTransactions) {
+        transactionsMap[t.id] = t;
       }
 
-      for (var doc in targetSnapshot.docs) {
-        transactionsMap[doc.id] = TransactionModel.fromMap(doc.data(), doc.id);
+      for (var t in targetTransactions) {
+        transactionsMap[t.id] = t;
       }
 
-      // Sort by createdAt descending
       final transactions = transactionsMap.values.toList();
       transactions.sort((a, b) => b.createdAt.compareTo(a.createdAt));
 
-      return transactions;
+      controller.add(transactions);
+    }
+
+    s1 = initiatedQuery.listen((snapshot) {
+      initiatedTransactions = snapshot.docs
+          .map((doc) => TransactionModel.fromMap(doc.data(), doc.id))
+          .toList();
+      emitCombined();
     });
+
+    s2 = targetQuery.listen((snapshot) {
+      targetTransactions = snapshot.docs
+          .map((doc) => TransactionModel.fromMap(doc.data(), doc.id))
+          .toList();
+      emitCombined();
+    });
+
+    controller.onCancel = () {
+      s1?.cancel();
+      s2?.cancel();
+      controller.close();
+    };
+
+    return controller.stream;
   }
 
   /// Update transaction status (Pending, Accepted, In Progress, Completed, Cancelled)

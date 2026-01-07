@@ -35,6 +35,15 @@ class _TransactionHistoryScreenState extends State<TransactionHistoryScreen> {
   }
 
   @override
+  void dispose() {
+    // Stop listening when screen is closed
+    if (mounted) {
+      Provider.of<TransactionProvider>(context, listen: false).stopListening();
+    }
+    super.dispose();
+  }
+
+  @override
   Widget build(BuildContext context) {
     final userProvider = Provider.of<UserProvider>(context);
     final transactionProvider = Provider.of<TransactionProvider>(context);

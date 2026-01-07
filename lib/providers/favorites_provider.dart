@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'package:flutter/material.dart';
 import '../models/favorite.dart';
 import '../services/firebase_service.dart';
@@ -20,11 +21,23 @@ class FavoritesProvider extends ChangeNotifier {
   List<FavoriteModel> get rentalFavorites =>
       _favorites.where((f) => f.isRental).toList();
 
+  // Stream subscription
+  StreamSubscription<List<FavoriteModel>>? _favoritesSubscription;
+  String? _currentUserId;
+
   void startListening(String userId) {
+    if (_currentUserId == userId && _favoritesSubscription != null) {
+      return;
+    }
+
+    stopListening();
+    _currentUserId = userId;
     _isLoading = true;
+    // Notify listeners in microtask to avoid build conflicts
     Future.microtask(() => notifyListeners());
 
-    _firebaseService.getUserFavoritesStream(userId).listen(
+    _favoritesSubscription =
+        _firebaseService.getUserFavoritesStream(userId).listen(
       (favoritesData) {
         _favorites = favoritesData;
         _isLoading = false;
@@ -36,6 +49,12 @@ class FavoritesProvider extends ChangeNotifier {
         notifyListeners();
       },
     );
+  }
+
+  void stopListening() {
+    _favoritesSubscription?.cancel();
+    _favoritesSubscription = null;
+    _currentUserId = null;
   }
 
   Future<void> toggleFavorite(FavoriteModel favorite) async {
