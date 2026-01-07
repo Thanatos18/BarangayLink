@@ -24,28 +24,43 @@ class FavoritesProvider extends ChangeNotifier {
     _isLoading = true;
     notifyListeners();
 
-    _firebaseService
-        .getUserFavoritesStream(userId)
-        .listen(
-          (favoritesData) {
-            _favorites = favoritesData;
-            _isLoading = false;
-            notifyListeners();
-          },
-          onError: (e) {
-            _errorMessage = e.toString();
-            _isLoading = false;
-            notifyListeners();
-          },
-        );
+    _firebaseService.getUserFavoritesStream(userId).listen(
+      (favoritesData) {
+        _favorites = favoritesData;
+        _isLoading = false;
+        notifyListeners();
+      },
+      onError: (e) {
+        _errorMessage = e.toString();
+        _isLoading = false;
+        notifyListeners();
+      },
+    );
   }
 
   Future<void> toggleFavorite(FavoriteModel favorite) async {
+    // 1. Check if it's already a favorite
+    final isFav = isFavorite(favorite.itemId);
+
+    // 2. Optimistic Update (Update local state immediately)
+    if (isFav) {
+      _favorites.removeWhere((f) => f.itemId == favorite.itemId);
+    } else {
+      _favorites.add(favorite);
+    }
+    notifyListeners(); // Update UI instantly
+
+    // 3. Perform actual server operation
     try {
-      // Optimistic update could be done here, but since stream updates automatically,
-      // we just call the service.
       await _firebaseService.toggleFavorite(favorite);
+      // The stream will eventually update and sync state, which is fine.
     } catch (e) {
+      // 4. Revert if failed
+      if (isFav) {
+        _favorites.add(favorite);
+      } else {
+        _favorites.removeWhere((f) => f.itemId == favorite.itemId);
+      }
       _errorMessage = e.toString();
       notifyListeners();
     }
