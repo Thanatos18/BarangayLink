@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:firebase_storage/firebase_storage.dart';
-import 'dart:io';
+import 'dart:typed_data'; // For web compatibility
 import '../../constants/app_constants.dart';
 import '../../providers/user_provider.dart';
 import '../../services/firebase_service.dart';
@@ -23,7 +23,7 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
   late TextEditingController _contactController;
   late TextEditingController _bioController;
   String? _selectedBarangay;
-  File? _selectedImage; // To store the picked image
+  Uint8List? _selectedImageBytes; // Store image as bytes (Universal)
   bool _isLoading = false;
   bool _hasChanges = false;
   final ImagePicker _picker = ImagePicker();
@@ -32,8 +32,9 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
     try {
       final XFile? image = await _picker.pickImage(source: ImageSource.gallery);
       if (image != null) {
+        final bytes = await image.readAsBytes();
         setState(() {
-          _selectedImage = File(image.path);
+          _selectedImageBytes = bytes;
           _hasChanges = true;
         });
       }
@@ -47,7 +48,7 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
   }
 
   Future<String?> _uploadImage(String userId) async {
-    if (_selectedImage == null) return null;
+    if (_selectedImageBytes == null) return null;
 
     try {
       final storageRef = FirebaseStorage.instance
@@ -55,7 +56,8 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
           .child('user_profiles')
           .child('$userId.jpg');
 
-      await storageRef.putFile(_selectedImage!);
+      final metadata = SettableMetadata(contentType: 'image/jpeg');
+      await storageRef.putData(_selectedImageBytes!, metadata);
       return await storageRef.getDownloadURL();
     } catch (e) {
       throw Exception('Error uploading image: $e');
@@ -261,21 +263,22 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
               CircleAvatar(
                 radius: 50,
                 backgroundColor: kPrimaryColor.withOpacity(0.1),
-                backgroundImage: _selectedImage != null
-                    ? FileImage(_selectedImage!)
+                backgroundImage: _selectedImageBytes != null
+                    ? MemoryImage(_selectedImageBytes!)
                     : user?.profileImageUrl != null
                         ? NetworkImage(user!.profileImageUrl!) as ImageProvider
                         : null,
-                child: _selectedImage == null && user?.profileImageUrl == null
-                    ? Text(
-                        (user?.name ?? 'U')[0].toUpperCase(),
-                        style: const TextStyle(
-                          fontSize: 40,
-                          fontWeight: FontWeight.bold,
-                          color: kPrimaryColor,
-                        ),
-                      )
-                    : null,
+                child:
+                    _selectedImageBytes == null && user?.profileImageUrl == null
+                        ? Text(
+                            (user?.name ?? 'U')[0].toUpperCase(),
+                            style: const TextStyle(
+                              fontSize: 40,
+                              fontWeight: FontWeight.bold,
+                              color: kPrimaryColor,
+                            ),
+                          )
+                        : null,
               ),
               Positioned(
                 bottom: 0,
@@ -352,7 +355,7 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
       }
 
       // Handle Image Upload independently but part of the save process
-      if (_selectedImage != null) {
+      if (_selectedImageBytes != null) {
         final imageUrl = await _uploadImage(user.uid);
         if (imageUrl != null) {
           updateData['profileImageUrl'] = imageUrl;
@@ -366,7 +369,7 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
         }
       }
 
-      if (updateData.isNotEmpty || _selectedImage != null) {
+      if (updateData.isNotEmpty || _selectedImageBytes != null) {
         // Refresh user data
         await userProvider.refreshUser();
 
