@@ -100,6 +100,16 @@ class ServiceDetailScreen extends StatelessWidget {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             // Header section
+            if (service.imageUrls.isNotEmpty)
+              Image.network(
+                service.imageUrls.first,
+                width: double.infinity,
+                height: 250,
+                fit: BoxFit.cover,
+                errorBuilder: (context, error, stackTrace) =>
+                    const SizedBox.shrink(),
+              ),
+            // Header section
             _buildHeader(),
             const Divider(),
             // Details section

@@ -14,6 +14,7 @@ class JobModel {
   final DateTime createdAt;
   final DateTime updatedAt;
   final String location; // Specific address details
+  final List<String> imageUrls;
 
   JobModel({
     required this.id,
@@ -29,6 +30,7 @@ class JobModel {
     required this.createdAt,
     required this.updatedAt,
     required this.location,
+    this.imageUrls = const [],
   });
 
   bool get isOpen => status == 'Open';
@@ -52,6 +54,7 @@ class JobModel {
       createdAt: (data['createdAt'] as Timestamp?)?.toDate() ?? DateTime.now(),
       updatedAt: (data['updatedAt'] as Timestamp?)?.toDate() ?? DateTime.now(),
       location: data['location'] ?? '',
+      imageUrls: List<String>.from(data['imageUrls'] ?? []),
     );
   }
 
@@ -70,6 +73,7 @@ class JobModel {
       'createdAt': Timestamp.fromDate(createdAt),
       'updatedAt': Timestamp.fromDate(updatedAt),
       'location': location,
+      'imageUrls': imageUrls,
     };
   }
 
@@ -84,6 +88,7 @@ class JobModel {
     List<Applicant>? applicants,
     DateTime? updatedAt,
     String? location,
+    List<String>? imageUrls,
   }) {
     return JobModel(
       id: id, // ID never changes
@@ -99,6 +104,7 @@ class JobModel {
       applicants: applicants ?? this.applicants,
       updatedAt: updatedAt ?? this.updatedAt,
       location: location ?? this.location,
+      imageUrls: imageUrls ?? this.imageUrls,
     );
   }
 }

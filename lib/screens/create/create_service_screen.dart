@@ -5,6 +5,9 @@ import '../../models/service.dart';
 import '../../providers/services_provider.dart';
 import '../../providers/user_provider.dart';
 import '../../providers/feedback_provider.dart';
+import 'dart:typed_data';
+import 'package:image_picker/image_picker.dart';
+import '../../services/cloudinary_service.dart';
 
 class CreateServiceScreen extends StatefulWidget {
   const CreateServiceScreen({super.key});
@@ -24,6 +27,32 @@ class _CreateServiceScreenState extends State<CreateServiceScreen> {
   String? _selectedBarangay;
   bool _isAvailable = true;
   bool _isSubmitting = false;
+
+  Uint8List? _selectedImageBytes;
+  final ImagePicker _picker = ImagePicker();
+  final CloudinaryService _cloudinaryService = CloudinaryService();
+
+  Future<void> _pickImage() async {
+    try {
+      final XFile? image = await _picker.pickImage(
+        source: ImageSource.gallery,
+        maxWidth: 1024,
+        maxHeight: 1024,
+        imageQuality: 70,
+      );
+      if (image != null) {
+        final bytes = await image.readAsBytes();
+        setState(() {
+          _selectedImageBytes = bytes;
+        });
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context)
+            .showSnackBar(SnackBar(content: Text('Error picking image: $e')));
+      }
+    }
+  }
 
   @override
   void initState() {
@@ -246,6 +275,53 @@ class _CreateServiceScreenState extends State<CreateServiceScreen> {
               ),
               const SizedBox(height: 16),
 
+              // Image Picker
+              Text('Reference Image (Optional)',
+                  style: TextStyle(
+                      fontWeight: FontWeight.bold, color: Colors.grey[700])),
+              const SizedBox(height: 8),
+              GestureDetector(
+                onTap: _pickImage,
+                child: Container(
+                  height: 150,
+                  width: double.infinity,
+                  decoration: BoxDecoration(
+                    color: Colors.grey[200],
+                    borderRadius: BorderRadius.circular(12),
+                    border: Border.all(color: Colors.grey[300]!),
+                    image: _selectedImageBytes != null
+                        ? DecorationImage(
+                            image: MemoryImage(_selectedImageBytes!),
+                            fit: BoxFit.cover,
+                          )
+                        : null,
+                  ),
+                  child: _selectedImageBytes == null
+                      ? Column(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: [
+                            const Icon(Icons.add_a_photo,
+                                size: 40, color: Colors.grey),
+                            const SizedBox(height: 8),
+                            Text('Tap to add photo',
+                                style: TextStyle(color: Colors.grey[600])),
+                          ],
+                        )
+                      : null,
+                ),
+              ),
+              if (_selectedImageBytes != null)
+                Align(
+                  alignment: Alignment.centerRight,
+                  child: TextButton.icon(
+                    onPressed: () => setState(() => _selectedImageBytes = null),
+                    icon: const Icon(Icons.delete, color: Colors.red),
+                    label: const Text('Remove',
+                        style: TextStyle(color: Colors.red)),
+                  ),
+                ),
+              const SizedBox(height: 16),
+
               // Availability toggle
               SwitchListTile(
                 title: const Text('Available for Booking'),
@@ -368,6 +444,16 @@ class _CreateServiceScreenState extends State<CreateServiceScreen> {
     });
 
     try {
+      List<String> imageUrls = [];
+      if (_selectedImageBytes != null) {
+        final url = await _cloudinaryService.uploadImage(
+          _selectedImageBytes!,
+          'barangay_services',
+          'service_${DateTime.now().millisecondsSinceEpoch}',
+        );
+        if (url != null) imageUrls.add(url);
+      }
+
       final service = ServiceModel(
         id: '',
         name: _nameController.text.trim(),
@@ -381,6 +467,7 @@ class _CreateServiceScreenState extends State<CreateServiceScreen> {
         status: _isAvailable ? 'Available' : 'Unavailable',
         createdAt: DateTime.now(),
         updatedAt: DateTime.now(),
+        imageUrls: imageUrls,
       );
 
       await context.read<ServicesProvider>().createService(service);
