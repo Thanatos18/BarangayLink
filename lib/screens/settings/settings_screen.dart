@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../../providers/user_provider.dart';
 import '../../widgets/custom_app_bar.dart';
+import '../../widgets/modern_dialog.dart';
 import '../auth/login_screen.dart';
 
 class SettingsScreen extends StatefulWidget {
@@ -166,166 +167,132 @@ class _SettingsScreenState extends State<SettingsScreen> {
     final user = Provider.of<UserProvider>(context, listen: false).currentUser;
     if (user == null) return;
 
-    showDialog(
-      context: context,
-      builder: (context) => AlertDialog(
-        title: const Text('Change Password'),
-        content: Text(
+    ModernDialog.show(
+      context,
+      title: 'Change Password',
+      description:
           'A password reset link will be sent to ${user.email}. Are you sure?',
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(context),
-            child: const Text('Cancel'),
-          ),
-          ElevatedButton(
-            onPressed: () async {
-              Navigator.pop(context);
-              try {
-                // Initialize AuthService directly since it's a stateless service wrapper
-                // or retrieve if provided. For now, creating instance as per other files.
-                // However, cleaner to import it.
-                // We need to import AuthService at the top.
-                // Assuming we will add the import.
-                await Provider.of<UserProvider>(
-                  context,
-                  listen: false,
-                ).sendPasswordResetEmail();
-                if (mounted) {
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    const SnackBar(
-                      content: Text('Password reset email sent successfully'),
-                      backgroundColor: Colors.green,
-                    ),
-                  );
-                }
-              } catch (e) {
-                if (mounted) {
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    SnackBar(
-                      content: Text('Failed to send email: $e'),
-                      backgroundColor: Colors.red,
-                    ),
-                  );
-                }
-              }
-            },
-            child: const Text('Send Email'),
-          ),
-        ],
-      ),
+      icon: Icons.lock_reset,
+      primaryButtonText: 'Send Email',
+      onPrimaryPressed: () async {
+        Navigator.pop(context);
+        try {
+          await Provider.of<UserProvider>(
+            context,
+            listen: false,
+          ).sendPasswordResetEmail();
+          if (mounted) {
+            ScaffoldMessenger.of(context).showSnackBar(
+              const SnackBar(
+                content: Text('Password reset email sent successfully'),
+                backgroundColor: Colors.green,
+              ),
+            );
+          }
+        } catch (e) {
+          if (mounted) {
+            ScaffoldMessenger.of(context).showSnackBar(
+              SnackBar(
+                content: Text('Failed to send email: $e'),
+                backgroundColor: Colors.red,
+              ),
+            );
+          }
+        }
+      },
+      secondaryButtonText: 'Cancel',
     );
   }
 
   void _showPrivacyPolicy() {
-    showDialog(
-      context: context,
-      builder: (context) => AlertDialog(
-        title: const Text('Privacy Policy'),
-        content: const SingleChildScrollView(
-          child: Text(
-            'BarangayLink respects your privacy. We collect minimal data necessary '
-            'to provide our services. Your personal information is stored securely '
-            'and never shared with third parties without your consent.\n\n'
-            'We use your data to:\n'
-            '• Match you with jobs, services, and rentals in your barangay\n'
-            '• Facilitate transactions between users\n'
-            '• Send relevant notifications\n\n'
-            'You can request data deletion at any time.',
-          ),
+    ModernDialog.show(
+      context,
+      title: 'Privacy Policy',
+      content: const SingleChildScrollView(
+        child: Text(
+          'BarangayLink respects your privacy. We collect minimal data necessary '
+          'to provide our services. Your personal information is stored securely '
+          'and never shared with third parties without your consent.\n\n'
+          'We use your data to:\n'
+          '• Match you with jobs, services, and rentals in your barangay\n'
+          '• Facilitate transactions between users\n'
+          '• Send relevant notifications\n\n'
+          'You can request data deletion at any time.',
+          textAlign: TextAlign.justify,
         ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(context),
-            child: const Text('Close'),
-          ),
-        ],
       ),
+      icon: Icons.privacy_tip,
+      primaryButtonText: 'Close',
+      onPrimaryPressed: () => Navigator.pop(context),
     );
   }
 
   void _showTermsOfService() {
-    showDialog(
-      context: context,
-      builder: (context) => AlertDialog(
-        title: const Text('Terms of Service'),
-        content: const SingleChildScrollView(
-          child: Text(
-            'By using BarangayLink, you agree to:\n\n'
-            '• Provide accurate information\n'
-            '• Treat other users with respect\n'
-            '• Complete transactions in good faith\n'
-            '• Report inappropriate content\n'
-            '• Not use the platform for illegal activities\n\n'
-            'Violation of these terms may result in account suspension.',
-          ),
+    ModernDialog.show(
+      context,
+      title: 'Terms of Service',
+      content: const SingleChildScrollView(
+        child: Text(
+          'By using BarangayLink, you agree to:\n\n'
+          '• Provide accurate information\n'
+          '• Treat other users with respect\n'
+          '• Complete transactions in good faith\n'
+          '• Report inappropriate content\n'
+          '• Not use the platform for illegal activities\n\n'
+          'Violation of these terms may result in account suspension.',
+          textAlign: TextAlign.justify,
         ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(context),
-            child: const Text('Close'),
-          ),
-        ],
       ),
+      icon: Icons.description,
+      primaryButtonText: 'Close',
+      onPrimaryPressed: () => Navigator.pop(context),
     );
   }
 
   void _showHelpSupport() {
-    showDialog(
-      context: context,
-      builder: (context) => AlertDialog(
-        title: const Text('Help & Support'),
-        content: const Column(
-          mainAxisSize: MainAxisSize.min,
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text('Need help? Contact us:'),
-            SizedBox(height: 16),
-            Row(
-              children: [
-                Icon(Icons.email, size: 20),
-                SizedBox(width: 8),
-                Text('support@barangaylink.com'),
-              ],
-            ),
-            SizedBox(height: 8),
-            Row(
-              children: [
-                Icon(Icons.phone, size: 20),
-                SizedBox(width: 8),
-                Text('+63 912 345 6789'),
-              ],
-            ),
-          ],
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(context),
-            child: const Text('Close'),
+    ModernDialog.show(
+      context,
+      title: 'Help & Support',
+      icon: Icons.help,
+      content: const Column(
+        mainAxisSize: MainAxisSize.min,
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text('Need help? Contact us:'),
+          SizedBox(height: 16),
+          Row(
+            children: [
+              Icon(Icons.email, size: 20, color: Colors.grey),
+              SizedBox(width: 12),
+              Text('support@barangaylink.com'),
+            ],
+          ),
+          SizedBox(height: 12),
+          Row(
+            children: [
+              Icon(Icons.phone, size: 20, color: Colors.grey),
+              SizedBox(width: 12),
+              Text('+63 912 345 6789'),
+            ],
           ),
         ],
       ),
+      primaryButtonText: 'Close',
+      onPrimaryPressed: () => Navigator.pop(context),
     );
   }
 
   Future<void> _confirmLogout(UserProvider userProvider) async {
-    final confirmed = await showDialog<bool>(
-      context: context,
-      builder: (context) => AlertDialog(
-        title: const Text('Logout'),
-        content: const Text('Are you sure you want to logout?'),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(context, false),
-            child: const Text('Cancel'),
-          ),
-          ElevatedButton(
-            onPressed: () => Navigator.pop(context, true),
-            style: ElevatedButton.styleFrom(backgroundColor: Colors.red),
-            child: const Text('Logout'),
-          ),
-        ],
-      ),
+    final confirmed = await ModernDialog.show<bool>(
+      context,
+      title: 'Logout',
+      description: 'Are you sure you want to logout?',
+      icon: Icons.logout,
+      iconColor: Colors.red,
+      isDestructive: true,
+      primaryButtonText: 'Logout',
+      onPrimaryPressed: () => Navigator.pop(context, true),
+      secondaryButtonText: 'Cancel',
     );
 
     if (confirmed == true) {

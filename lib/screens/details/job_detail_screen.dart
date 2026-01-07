@@ -11,6 +11,7 @@ import '../../models/favorite.dart';
 import '../create/edit_job_screen.dart';
 import '../../providers/reports_provider.dart';
 import '../../models/report.dart';
+import '../../widgets/modern_dialog.dart';
 
 class JobDetailScreen extends StatelessWidget {
   final JobModel job;
@@ -603,145 +604,113 @@ class JobDetailScreen extends StatelessWidget {
     final detailsController = TextEditingController();
     String selectedReason = ReportReasons.reasons.first;
 
-    showDialog(
-      context: context,
-      builder: (context) => StatefulBuilder(
-        builder: (context, setState) => AlertDialog(
-          title: const Text('Report Job'),
-          content: SingleChildScrollView(
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                const Text('Why are you reporting this job?'),
-                const SizedBox(height: 12),
-                DropdownButtonFormField<String>(
-                  value: selectedReason,
-                  isExpanded: true,
-                  items: ReportReasons.reasons.map((reason) {
-                    return DropdownMenuItem(value: reason, child: Text(reason));
-                  }).toList(),
-                  onChanged: (value) {
-                    if (value != null) {
-                      setState(() => selectedReason = value);
-                    }
-                  },
-                  decoration: const InputDecoration(labelText: 'Reason'),
-                ),
-                const SizedBox(height: 12),
-                TextField(
-                  controller: detailsController,
-                  decoration: const InputDecoration(
-                    labelText: 'Additional Details (Optional)',
-                    alignLabelWithHint: true,
-                  ),
-                  maxLines: 3,
-                ),
-              ],
-            ),
-          ),
-          actions: [
-            TextButton(
-              onPressed: () => Navigator.pop(context),
-              child: const Text('Cancel'),
-            ),
-            ElevatedButton(
-              onPressed: () async {
-                final success =
-                    await context.read<ReportsProvider>().submitReport(
-                          reportedItemId: job.id,
-                          reportedItemType: 'job',
-                          reportedItemTitle: job.title,
-                          reportedBy: currentUser.uid,
-                          reportedByName: currentUser.name,
-                          reason: selectedReason,
-                          additionalDetails: detailsController.text.trim(),
-                        );
-                if (context.mounted) {
-                  Navigator.pop(context);
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    SnackBar(
-                      content: Text(
-                        success
-                            ? 'Report submitted successfully'
-                            : 'Failed to submit report',
-                      ),
-                      backgroundColor: success ? Colors.green : Colors.red,
-                    ),
-                  );
+    ModernDialog.show(
+      context,
+      title: 'Report Job',
+      content: StatefulBuilder(
+        builder: (context, setState) => Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            const Text('Why are you reporting this job?'),
+            const SizedBox(height: 12),
+            DropdownButtonFormField<String>(
+              value: selectedReason,
+              isExpanded: true,
+              items: ReportReasons.reasons.map((reason) {
+                return DropdownMenuItem(value: reason, child: Text(reason));
+              }).toList(),
+              onChanged: (value) {
+                if (value != null) {
+                  setState(() => selectedReason = value);
                 }
               },
-              child: const Text('Submit Report'),
+              decoration: const InputDecoration(labelText: 'Reason'),
+            ),
+            const SizedBox(height: 12),
+            TextField(
+              controller: detailsController,
+              decoration: const InputDecoration(
+                labelText: 'Additional Details (Optional)',
+                alignLabelWithHint: true,
+              ),
+              maxLines: 3,
             ),
           ],
         ),
       ),
+      primaryButtonText: 'Submit Report',
+      onPrimaryPressed: () async {
+        final success = await context.read<ReportsProvider>().submitReport(
+              reportedItemId: job.id,
+              reportedItemType: 'job',
+              reportedItemTitle: job.title,
+              reportedBy: currentUser.uid,
+              reportedByName: currentUser.name,
+              reason: selectedReason,
+              additionalDetails: detailsController.text.trim(),
+            );
+        if (context.mounted) {
+          Navigator.pop(context);
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text(
+                success
+                    ? 'Report submitted successfully'
+                    : 'Failed to submit report',
+              ),
+              backgroundColor: success ? Colors.green : Colors.red,
+            ),
+          );
+        }
+      },
+      secondaryButtonText: 'Cancel',
     );
   }
 
   void _showDeleteConfirmation(BuildContext context) {
-    showDialog(
-      context: context,
-      builder: (context) => AlertDialog(
-        title: const Text('Delete Job'),
-        content: const Text(
+    ModernDialog.show(
+      context,
+      title: 'Delete Job',
+      description:
           'Are you sure you want to delete this job? This action cannot be undone.',
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(context),
-            child: const Text('Cancel'),
-          ),
-          ElevatedButton(
-            onPressed: () async {
-              Navigator.pop(context); // Close dialog
-              try {
-                await context.read<JobsProvider>().deleteJob(job.id);
-                if (context.mounted) {
-                  Navigator.pop(context); // Return to jobs list
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    const SnackBar(content: Text('Job deleted successfully')),
-                  );
-                }
-              } catch (e) {
-                if (context.mounted) {
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    SnackBar(content: Text('Error deleting job: $e')),
-                  );
-                }
-              }
-            },
-            style: ElevatedButton.styleFrom(
-              backgroundColor: Colors.red,
-              foregroundColor: Colors.white,
-            ),
-            child: const Text('Delete'),
-          ),
-        ],
-      ),
+      icon: Icons.delete_forever,
+      iconColor: Colors.red,
+      isDestructive: true,
+      primaryButtonText: 'Delete',
+      onPrimaryPressed: () async {
+        Navigator.pop(context); // Close dialog
+        try {
+          await context.read<JobsProvider>().deleteJob(job.id);
+          if (context.mounted) {
+            Navigator.pop(context); // Return to jobs list
+            ScaffoldMessenger.of(context).showSnackBar(
+              const SnackBar(content: Text('Job deleted successfully')),
+            );
+          }
+        } catch (e) {
+          if (context.mounted) {
+            ScaffoldMessenger.of(context).showSnackBar(
+              SnackBar(content: Text('Error deleting job: $e')),
+            );
+          }
+        }
+      },
+      secondaryButtonText: 'Cancel',
     );
   }
 
   Future<void> _applyToJob(BuildContext context, dynamic currentUser) async {
     // Show confirmation dialog
-    final confirm = await showDialog<bool>(
-      context: context,
-      builder: (context) => AlertDialog(
-        title: const Text('Apply for Job'),
-        content: Text(
+    final confirm = await ModernDialog.show<bool>(
+      context,
+      title: 'Apply for Job',
+      description:
           'Are you sure you want to apply for "${job.title}"?\n\nThe job poster will see your name and be able to contact you.',
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(context, false),
-            child: const Text('Cancel'),
-          ),
-          ElevatedButton(
-            onPressed: () => Navigator.pop(context, true),
-            child: const Text('Apply'),
-          ),
-        ],
-      ),
+      icon: Icons.send,
+      primaryButtonText: 'Apply',
+      onPrimaryPressed: () => Navigator.pop(context, true),
+      secondaryButtonText: 'Cancel',
     );
 
     if (confirm != true) return;

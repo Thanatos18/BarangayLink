@@ -418,38 +418,30 @@ class _ContentModerationScreenState extends State<ContentModerationScreen> {
     String adminUid,
     AdminProvider provider,
   ) async {
-    final action = await showDialog<String>(
-      context: context,
-      builder: (context) => AlertDialog(
-        title: const Text('Take Action'),
-        content: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Text(
-              'What action do you want to take on "${report.reportedItemTitle}"?',
-            ),
-            const SizedBox(height: 16),
-            ListTile(
-              leading: const Icon(Icons.delete, color: Colors.red),
-              title: const Text('Delete Content'),
-              subtitle: const Text('Remove the reported item'),
-              onTap: () => Navigator.pop(context, 'delete'),
-            ),
-            ListTile(
-              leading: const Icon(Icons.warning, color: Colors.orange),
-              title: const Text('Warn User'),
-              subtitle: const Text('Mark as reviewed with warning'),
-              onTap: () => Navigator.pop(context, 'warn'),
-            ),
-          ],
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(context),
-            child: const Text('Cancel'),
+    final action = await ModernDialog.show<String>(
+      context,
+      title: 'Take Action',
+      description:
+          'What action do you want to take on "${report.reportedItemTitle}"?',
+      content: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          ListTile(
+            leading: const Icon(Icons.delete, color: Colors.red),
+            title: const Text('Delete Content'),
+            subtitle: const Text('Remove the reported item'),
+            onTap: () => Navigator.pop(context, 'delete'),
+          ),
+          ListTile(
+            leading: const Icon(Icons.warning, color: Colors.orange),
+            title: const Text('Warn User'),
+            subtitle: const Text('Mark as reviewed with warning'),
+            onTap: () => Navigator.pop(context, 'warn'),
           ),
         ],
       ),
+      icon: Icons.gavel,
+      secondaryButtonText: 'Cancel',
     );
 
     if (action == 'delete') {

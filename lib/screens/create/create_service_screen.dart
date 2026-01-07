@@ -8,6 +8,7 @@ import '../../providers/feedback_provider.dart';
 import 'dart:typed_data';
 import 'package:image_picker/image_picker.dart';
 import '../../services/cloudinary_service.dart';
+import '../../widgets/modern_dialog.dart';
 
 class CreateServiceScreen extends StatefulWidget {
   const CreateServiceScreen({super.key});
@@ -387,44 +388,35 @@ class _CreateServiceScreenState extends State<CreateServiceScreen> {
       BuildContext context, ServicesProvider servicesProvider) {
     final controller = TextEditingController();
 
-    showDialog(
-      context: context,
-      builder: (context) => AlertDialog(
-        title: const Text('Add New Category'),
-        content: TextField(
-          controller: controller,
-          decoration: const InputDecoration(
-            labelText: 'Category Name',
-            hintText: 'e.g., Pet Care',
-          ),
-          textCapitalization: TextCapitalization.words,
-          autofocus: true,
+    ModernDialog.show(
+      context,
+      title: 'Add New Category',
+      content: TextField(
+        controller: controller,
+        decoration: const InputDecoration(
+          labelText: 'Category Name',
+          hintText: 'e.g., Pet Care',
         ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(context),
-            child: const Text('Cancel'),
-          ),
-          ElevatedButton(
-            onPressed: () async {
-              final newCategory = controller.text.trim();
-              if (newCategory.isNotEmpty) {
-                await servicesProvider.addCategory(newCategory);
-                setState(() {
-                  _selectedCategory = newCategory;
-                });
-                if (context.mounted) {
-                  Navigator.pop(context);
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    SnackBar(content: Text('Category "$newCategory" added!')),
-                  );
-                }
-              }
-            },
-            child: const Text('Add'),
-          ),
-        ],
+        textCapitalization: TextCapitalization.words,
+        autofocus: true,
       ),
+      primaryButtonText: 'Add',
+      onPrimaryPressed: () async {
+        final newCategory = controller.text.trim();
+        if (newCategory.isNotEmpty) {
+          await servicesProvider.addCategory(newCategory);
+          setState(() {
+            _selectedCategory = newCategory;
+          });
+          if (context.mounted) {
+            Navigator.pop(context);
+            ScaffoldMessenger.of(context).showSnackBar(
+              SnackBar(content: Text('Category "$newCategory" added!')),
+            );
+          }
+        }
+      },
+      secondaryButtonText: 'Cancel',
     );
   }
 

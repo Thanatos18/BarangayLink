@@ -11,6 +11,7 @@ import '../../models/favorite.dart';
 import '../create/edit_rental_screen.dart';
 import '../../providers/reports_provider.dart';
 import '../../models/report.dart';
+import '../../widgets/modern_dialog.dart';
 
 class RentalDetailScreen extends StatelessWidget {
   final RentalModel rental;
@@ -505,79 +506,67 @@ class RentalDetailScreen extends StatelessWidget {
     final detailsController = TextEditingController();
     String selectedReason = ReportReasons.reasons.first;
 
-    showDialog(
-      context: context,
-      builder: (context) => StatefulBuilder(
-        builder: (context, setState) => AlertDialog(
-          title: const Text('Report Rental'),
-          content: SingleChildScrollView(
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                const Text('Why are you reporting this rental?'),
-                const SizedBox(height: 12),
-                DropdownButtonFormField<String>(
-                  value: selectedReason,
-                  isExpanded: true,
-                  items: ReportReasons.reasons.map((reason) {
-                    return DropdownMenuItem(value: reason, child: Text(reason));
-                  }).toList(),
-                  onChanged: (value) {
-                    if (value != null) {
-                      setState(() => selectedReason = value);
-                    }
-                  },
-                  decoration: const InputDecoration(labelText: 'Reason'),
-                ),
-                const SizedBox(height: 12),
-                TextField(
-                  controller: detailsController,
-                  decoration: const InputDecoration(
-                    labelText: 'Additional Details (Optional)',
-                    alignLabelWithHint: true,
-                  ),
-                  maxLines: 3,
-                ),
-              ],
-            ),
-          ),
-          actions: [
-            TextButton(
-              onPressed: () => Navigator.pop(context),
-              child: const Text('Cancel'),
-            ),
-            ElevatedButton(
-              onPressed: () async {
-                final success =
-                    await context.read<ReportsProvider>().submitReport(
-                          reportedItemId: rental.id,
-                          reportedItemType: 'rental',
-                          reportedItemTitle: rental.itemName,
-                          reportedBy: currentUser.uid,
-                          reportedByName: currentUser.name,
-                          reason: selectedReason,
-                          additionalDetails: detailsController.text.trim(),
-                        );
-                if (context.mounted) {
-                  Navigator.pop(context);
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    SnackBar(
-                      content: Text(
-                        success
-                            ? 'Report submitted successfully'
-                            : 'Failed to submit report',
-                      ),
-                      backgroundColor: success ? Colors.green : Colors.red,
-                    ),
-                  );
+    ModernDialog.show(
+      context,
+      title: 'Report Rental',
+      content: StatefulBuilder(
+        builder: (context, setState) => Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            const Text('Why are you reporting this rental?'),
+            const SizedBox(height: 12),
+            DropdownButtonFormField<String>(
+              value: selectedReason,
+              isExpanded: true,
+              items: ReportReasons.reasons.map((reason) {
+                return DropdownMenuItem(value: reason, child: Text(reason));
+              }).toList(),
+              onChanged: (value) {
+                if (value != null) {
+                  setState(() => selectedReason = value);
                 }
               },
-              child: const Text('Submit Report'),
+              decoration: const InputDecoration(labelText: 'Reason'),
+            ),
+            const SizedBox(height: 12),
+            TextField(
+              controller: detailsController,
+              decoration: const InputDecoration(
+                labelText: 'Additional Details (Optional)',
+                alignLabelWithHint: true,
+              ),
+              maxLines: 3,
             ),
           ],
         ),
       ),
+      primaryButtonText: 'Submit Report',
+      onPrimaryPressed: () async {
+        final success = await context.read<ReportsProvider>().submitReport(
+              reportedItemId: rental.id,
+              reportedItemType: 'rental',
+              reportedItemTitle: rental.itemName,
+              reportedBy: currentUser.uid,
+              reportedByName: currentUser.name,
+              reason: selectedReason,
+              additionalDetails: detailsController.text.trim(),
+            );
+        if (context.mounted) {
+          Navigator.pop(context);
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text(
+                success
+                    ? 'Report submitted successfully'
+                    : 'Failed to submit report',
+              ),
+              backgroundColor: success ? Colors.green : Colors.red,
+            ),
+          );
+        }
+      },
+      secondaryButtonText: 'Cancel',
     );
   }
 
@@ -608,70 +597,50 @@ class RentalDetailScreen extends StatelessWidget {
   }
 
   void _showDeleteConfirmation(BuildContext context) {
-    showDialog(
-      context: context,
-      builder: (context) => AlertDialog(
-        title: const Text('Delete Rental'),
-        content: const Text(
+    ModernDialog.show(
+      context,
+      title: 'Delete Rental',
+      description:
           'Are you sure you want to delete this rental listing? This action cannot be undone.',
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(context),
-            child: const Text('Cancel'),
-          ),
-          ElevatedButton(
-            onPressed: () async {
-              Navigator.pop(context); // Close dialog
-              try {
-                await context.read<RentalsProvider>().deleteRental(rental.id);
-                if (context.mounted) {
-                  Navigator.pop(context); // Return to rentals list
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    const SnackBar(
-                      content: Text('Rental deleted successfully'),
-                    ),
-                  );
-                }
-              } catch (e) {
-                if (context.mounted) {
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    SnackBar(content: Text('Error deleting rental: $e')),
-                  );
-                }
-              }
-            },
-            style: ElevatedButton.styleFrom(
-              backgroundColor: Colors.red,
-              foregroundColor: Colors.white,
-            ),
-            child: const Text('Delete'),
-          ),
-        ],
-      ),
+      icon: Icons.delete_forever,
+      iconColor: Colors.red,
+      isDestructive: true,
+      primaryButtonText: 'Delete',
+      onPrimaryPressed: () async {
+        Navigator.pop(context); // Close dialog
+        try {
+          await context.read<RentalsProvider>().deleteRental(rental.id);
+          if (context.mounted) {
+            Navigator.pop(context); // Return to rentals list
+            ScaffoldMessenger.of(context).showSnackBar(
+              const SnackBar(
+                content: Text('Rental deleted successfully'),
+              ),
+            );
+          }
+        } catch (e) {
+          if (context.mounted) {
+            ScaffoldMessenger.of(context).showSnackBar(
+              SnackBar(content: Text('Error deleting rental: $e')),
+            );
+          }
+        }
+      },
+      secondaryButtonText: 'Cancel',
     );
   }
 
   Future<void> _requestRental(BuildContext context, dynamic currentUser) async {
     // Show confirmation dialog
-    final confirm = await showDialog<bool>(
-      context: context,
-      builder: (context) => AlertDialog(
-        title: const Text('Request Rental'),
-        content: Text(
+    final confirm = await ModernDialog.show<bool>(
+      context,
+      title: 'Request Rental',
+      description:
           'Are you sure you want to request to rent "${rental.itemName}"?\n\nThe owner will be notified and can contact you.',
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(context, false),
-            child: const Text('Cancel'),
-          ),
-          ElevatedButton(
-            onPressed: () => Navigator.pop(context, true),
-            child: const Text('Request'),
-          ),
-        ],
-      ),
+      icon: Icons.shopping_cart_checkout,
+      primaryButtonText: 'Request',
+      onPrimaryPressed: () => Navigator.pop(context, true),
+      secondaryButtonText: 'Cancel',
     );
 
     if (confirm != true) return;

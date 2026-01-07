@@ -10,6 +10,7 @@ import '../../models/favorite.dart';
 import '../create/edit_service_screen.dart';
 import '../../providers/reports_provider.dart';
 import '../../models/report.dart';
+import '../../widgets/modern_dialog.dart';
 
 class ServiceDetailScreen extends StatelessWidget {
   final ServiceModel service;
@@ -420,149 +421,117 @@ class ServiceDetailScreen extends StatelessWidget {
     final detailsController = TextEditingController();
     String selectedReason = ReportReasons.reasons.first;
 
-    showDialog(
-      context: context,
-      builder: (context) => StatefulBuilder(
-        builder: (context, setState) => AlertDialog(
-          title: const Text('Report Service'),
-          content: SingleChildScrollView(
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                const Text('Why are you reporting this service?'),
-                const SizedBox(height: 12),
-                DropdownButtonFormField<String>(
-                  value: selectedReason,
-                  isExpanded: true,
-                  items: ReportReasons.reasons.map((reason) {
-                    return DropdownMenuItem(value: reason, child: Text(reason));
-                  }).toList(),
-                  onChanged: (value) {
-                    if (value != null) {
-                      setState(() => selectedReason = value);
-                    }
-                  },
-                  decoration: const InputDecoration(labelText: 'Reason'),
-                ),
-                const SizedBox(height: 12),
-                TextField(
-                  controller: detailsController,
-                  decoration: const InputDecoration(
-                    labelText: 'Additional Details (Optional)',
-                    alignLabelWithHint: true,
-                  ),
-                  maxLines: 3,
-                ),
-              ],
-            ),
-          ),
-          actions: [
-            TextButton(
-              onPressed: () => Navigator.pop(context),
-              child: const Text('Cancel'),
-            ),
-            ElevatedButton(
-              onPressed: () async {
-                final success =
-                    await context.read<ReportsProvider>().submitReport(
-                          reportedItemId: service.id,
-                          reportedItemType: 'service',
-                          reportedItemTitle: service.name,
-                          reportedBy: currentUser.uid,
-                          reportedByName: currentUser.name,
-                          reason: selectedReason,
-                          additionalDetails: detailsController.text.trim(),
-                        );
-                if (context.mounted) {
-                  Navigator.pop(context);
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    SnackBar(
-                      content: Text(
-                        success
-                            ? 'Report submitted successfully'
-                            : 'Failed to submit report',
-                      ),
-                      backgroundColor: success ? Colors.green : Colors.red,
-                    ),
-                  );
+    ModernDialog.show(
+      context,
+      title: 'Report Service',
+      content: StatefulBuilder(
+        builder: (context, setState) => Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            const Text('Why are you reporting this service?'),
+            const SizedBox(height: 12),
+            DropdownButtonFormField<String>(
+              value: selectedReason,
+              isExpanded: true,
+              items: ReportReasons.reasons.map((reason) {
+                return DropdownMenuItem(value: reason, child: Text(reason));
+              }).toList(),
+              onChanged: (value) {
+                if (value != null) {
+                  setState(() => selectedReason = value);
                 }
               },
-              child: const Text('Submit Report'),
+              decoration: const InputDecoration(labelText: 'Reason'),
+            ),
+            const SizedBox(height: 12),
+            TextField(
+              controller: detailsController,
+              decoration: const InputDecoration(
+                labelText: 'Additional Details (Optional)',
+                alignLabelWithHint: true,
+              ),
+              maxLines: 3,
             ),
           ],
         ),
       ),
+      primaryButtonText: 'Submit Report',
+      onPrimaryPressed: () async {
+        final success = await context.read<ReportsProvider>().submitReport(
+              reportedItemId: service.id,
+              reportedItemType: 'service',
+              reportedItemTitle: service.name,
+              reportedBy: currentUser.uid,
+              reportedByName: currentUser.name,
+              reason: selectedReason,
+              additionalDetails: detailsController.text.trim(),
+            );
+        if (context.mounted) {
+          Navigator.pop(context);
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text(
+                success
+                    ? 'Report submitted successfully'
+                    : 'Failed to submit report',
+              ),
+              backgroundColor: success ? Colors.green : Colors.red,
+            ),
+          );
+        }
+      },
+      secondaryButtonText: 'Cancel',
     );
   }
 
   void _showDeleteConfirmation(BuildContext context) {
-    showDialog(
-      context: context,
-      builder: (context) => AlertDialog(
-        title: const Text('Delete Service'),
-        content: const Text(
+    ModernDialog.show(
+      context,
+      title: 'Delete Service',
+      description:
           'Are you sure you want to delete this service? This action cannot be undone.',
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(context),
-            child: const Text('Cancel'),
-          ),
-          ElevatedButton(
-            onPressed: () async {
-              Navigator.pop(context); // Close dialog
-              try {
-                await context.read<ServicesProvider>().deleteService(
-                      service.id,
-                    );
-                if (context.mounted) {
-                  Navigator.pop(context); // Return to services list
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    const SnackBar(
-                      content: Text('Service deleted successfully'),
-                    ),
-                  );
-                }
-              } catch (e) {
-                if (context.mounted) {
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    SnackBar(content: Text('Error deleting service: $e')),
-                  );
-                }
-              }
-            },
-            style: ElevatedButton.styleFrom(
-              backgroundColor: Colors.red,
-              foregroundColor: Colors.white,
-            ),
-            child: const Text('Delete'),
-          ),
-        ],
-      ),
+      icon: Icons.delete_forever,
+      iconColor: Colors.red,
+      isDestructive: true,
+      primaryButtonText: 'Delete',
+      onPrimaryPressed: () async {
+        Navigator.pop(context); // Close dialog
+        try {
+          await context.read<ServicesProvider>().deleteService(
+                service.id,
+              );
+          if (context.mounted) {
+            Navigator.pop(context); // Return to services list
+            ScaffoldMessenger.of(context).showSnackBar(
+              const SnackBar(
+                content: Text('Service deleted successfully'),
+              ),
+            );
+          }
+        } catch (e) {
+          if (context.mounted) {
+            ScaffoldMessenger.of(context).showSnackBar(
+              SnackBar(content: Text('Error deleting service: $e')),
+            );
+          }
+        }
+      },
+      secondaryButtonText: 'Cancel',
     );
   }
 
   Future<void> _bookService(BuildContext context, dynamic currentUser) async {
     // Show confirmation dialog
-    final confirm = await showDialog<bool>(
-      context: context,
-      builder: (context) => AlertDialog(
-        title: const Text('Book Service'),
-        content: Text(
+    final confirm = await ModernDialog.show<bool>(
+      context,
+      title: 'Book Service',
+      description:
           'Are you sure you want to book "${service.name}"?\n\nThe service provider will be notified and can contact you.',
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(context, false),
-            child: const Text('Cancel'),
-          ),
-          ElevatedButton(
-            onPressed: () => Navigator.pop(context, true),
-            child: const Text('Book'),
-          ),
-        ],
-      ),
+      icon: Icons.calendar_today,
+      primaryButtonText: 'Book',
+      onPrimaryPressed: () => Navigator.pop(context, true),
+      secondaryButtonText: 'Cancel',
     );
 
     if (confirm != true) return;
