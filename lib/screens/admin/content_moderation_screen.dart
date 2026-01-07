@@ -41,7 +41,10 @@ class _ContentModerationScreenState extends State<ContentModerationScreen> {
     }
 
     return Scaffold(
-      appBar: const CustomAppBar(title: 'Content Moderation'),
+      appBar: const CustomAppBar(
+        title: 'Content Moderation',
+        showBackButton: true,
+      ),
       body: Column(
         children: [
           // Filter Chips

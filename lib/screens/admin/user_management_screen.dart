@@ -47,6 +47,7 @@ class _UserManagementScreenState extends State<UserManagementScreen> {
     return Scaffold(
       appBar: CustomAppBar(
         title: 'User Management',
+        showBackButton: true,
         actions: [
           IconButton(
             icon: const Icon(Icons.refresh),
