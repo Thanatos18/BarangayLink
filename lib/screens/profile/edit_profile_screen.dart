@@ -280,13 +280,13 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
                     ? MemoryImage(_selectedImageBytes!)
                     : (user?.profileImageUrl != null &&
                             user!.profileImageUrl!.isNotEmpty)
-                        ? (user!.profileImageUrl!.startsWith('data:')
+                        ? (user.profileImageUrl!.startsWith('data:')
                             ? MemoryImage(
                                 base64Decode(
                                   user.profileImageUrl!.split(',').last,
                                 ),
                               )
-                            : NetworkImage(user!.profileImageUrl!)
+                            : NetworkImage(user.profileImageUrl!)
                                 as ImageProvider)
                         : null,
                 child:
