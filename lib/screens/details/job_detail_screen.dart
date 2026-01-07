@@ -30,9 +30,10 @@ class JobDetailScreen extends StatelessWidget {
 
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Job Details'),
+        title: const Text('Job Details', style: TextStyle(color: Colors.white)),
         backgroundColor: kPrimaryColor,
         foregroundColor: Colors.white,
+        iconTheme: const IconThemeData(color: Colors.white),
         actions: [
           Consumer<FavoritesProvider>(
             builder: (context, favoritesProvider, _) {
@@ -128,6 +129,7 @@ class JobDetailScreen extends StatelessWidget {
 
   Widget _buildHeader() {
     return Container(
+      width: double.infinity,
       padding: const EdgeInsets.all(20),
       color: kPrimaryColor.withValues(alpha: 0.1),
       child: Column(

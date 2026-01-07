@@ -54,9 +54,11 @@ class _CreateServiceScreenState extends State<CreateServiceScreen> {
 
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Offer a Service'),
+        title: const Text('Offer a Service',
+            style: TextStyle(color: Colors.white)),
         backgroundColor: kPrimaryColor,
         foregroundColor: Colors.white,
+        iconTheme: const IconThemeData(color: Colors.white),
       ),
       body: SingleChildScrollView(
         padding: const EdgeInsets.all(20),

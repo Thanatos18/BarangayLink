@@ -52,9 +52,11 @@ class _CreateRentalScreenState extends State<CreateRentalScreen> {
 
     return Scaffold(
       appBar: AppBar(
-        title: const Text('List Item for Rent'),
+        title: const Text('List Item for Rent',
+            style: TextStyle(color: Colors.white)),
         backgroundColor: kPrimaryColor,
         foregroundColor: Colors.white,
+        iconTheme: const IconThemeData(color: Colors.white),
       ),
       body: SingleChildScrollView(
         padding: const EdgeInsets.all(20),

@@ -25,9 +25,11 @@ class RentalDetailScreen extends StatelessWidget {
 
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Rental Details'),
+        title:
+            const Text('Rental Details', style: TextStyle(color: Colors.white)),
         backgroundColor: kPrimaryColor,
         foregroundColor: Colors.white,
+        iconTheme: const IconThemeData(color: Colors.white),
         actions: [
           Consumer<FavoritesProvider>(
             builder: (context, favoritesProvider, _) {
@@ -126,6 +128,7 @@ class RentalDetailScreen extends StatelessWidget {
 
   Widget _buildHeader() {
     return Container(
+      width: double.infinity,
       padding: const EdgeInsets.all(20),
       color: kPrimaryColor.withValues(alpha: 0.1),
       child: Column(

@@ -52,9 +52,10 @@ class _CreateJobScreenState extends State<CreateJobScreen> {
 
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Post a Job'),
+        title: const Text('Post a Job', style: TextStyle(color: Colors.white)),
         backgroundColor: kPrimaryColor,
         foregroundColor: Colors.white,
+        iconTheme: const IconThemeData(color: Colors.white),
       ),
       body: SingleChildScrollView(
         padding: const EdgeInsets.all(20),

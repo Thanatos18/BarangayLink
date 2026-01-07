@@ -23,9 +23,11 @@ class ServiceDetailScreen extends StatelessWidget {
 
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Service Details'),
+        title: const Text('Service Details',
+            style: TextStyle(color: Colors.white)),
         backgroundColor: kPrimaryColor,
         foregroundColor: Colors.white,
+        iconTheme: const IconThemeData(color: Colors.white),
         actions: [
           Consumer<FavoritesProvider>(
             builder: (context, favoritesProvider, _) {
@@ -114,6 +116,7 @@ class ServiceDetailScreen extends StatelessWidget {
 
   Widget _buildHeader() {
     return Container(
+      width: double.infinity,
       padding: const EdgeInsets.all(20),
       color: kPrimaryColor.withValues(alpha: 0.1),
       child: Column(
