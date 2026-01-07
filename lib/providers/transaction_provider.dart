@@ -138,12 +138,38 @@ class TransactionProvider extends ChangeNotifier {
 
   /// Accept a transaction (for target user)
   Future<bool> acceptTransaction(String transactionId) async {
-    return await updateTransactionStatus(transactionId, 'Accepted');
+    final success = await updateTransactionStatus(transactionId, 'Accepted');
+    if (success) {
+      final transaction = await _firebaseService.getTransaction(transactionId);
+      if (transaction != null) {
+        await _sendTransactionNotification(
+          transactionId,
+          NotificationType.transactionUpdate,
+          'Request Accepted',
+          'Your ${transaction.typeLabel.toLowerCase()} regarding ${transaction.relatedName} has been accepted!',
+          transaction.initiatedBy,
+        );
+      }
+    }
+    return success;
   }
 
   /// Decline a transaction (for target user)
   Future<bool> declineTransaction(String transactionId) async {
-    return await updateTransactionStatus(transactionId, 'Cancelled');
+    final success = await updateTransactionStatus(transactionId, 'Cancelled');
+    if (success) {
+      final transaction = await _firebaseService.getTransaction(transactionId);
+      if (transaction != null) {
+        await _sendTransactionNotification(
+          transactionId,
+          NotificationType.transactionUpdate,
+          'Request Declined',
+          'Your request for ${transaction.relatedName} was declined.',
+          transaction.initiatedBy,
+        );
+      }
+    }
+    return success;
   }
 
   /// Cancel a transaction (for initiator or target)
@@ -155,6 +181,17 @@ class TransactionProvider extends ChangeNotifier {
   Future<bool> confirmPayment(String transactionId) async {
     try {
       await _firebaseService.confirmPayment(transactionId);
+      // Notify provider that payment is received
+      final transaction = await _firebaseService.getTransaction(transactionId);
+      if (transaction != null) {
+        await _sendTransactionNotification(
+          transactionId,
+          NotificationType.paymentReceived,
+          'Payment Received',
+          'Payment received for ${transaction.relatedName}. Transaction is now in progress.',
+          transaction.targetUser,
+        );
+      }
       return true;
     } catch (e) {
       _errorMessage = 'Failed to confirm payment: $e';
@@ -167,6 +204,18 @@ class TransactionProvider extends ChangeNotifier {
   Future<bool> completeTransaction(String transactionId) async {
     try {
       await _firebaseService.completeTransaction(transactionId);
+
+      // Notify target (provider/owner)
+      final transaction = await _firebaseService.getTransaction(transactionId);
+      if (transaction != null) {
+        await _sendTransactionNotification(
+          transactionId,
+          NotificationType.transactionUpdate,
+          'Transaction Completed',
+          'The transaction for ${transaction.relatedName} has been marked as completed.',
+          transaction.targetUser,
+        );
+      }
       return true;
     } catch (e) {
       _errorMessage = 'Failed to complete transaction: $e';
@@ -210,6 +259,31 @@ class TransactionProvider extends ChangeNotifier {
   /// Check if current user is the target of this transaction
   bool isTarget(TransactionModel transaction, String currentUserId) {
     return transaction.targetUser == currentUserId;
+  }
+
+  /// Send a notification related to a transaction
+  Future<void> _sendTransactionNotification(
+    String transactionId,
+    String type,
+    String title,
+    String message,
+    String targetUserId,
+  ) async {
+    try {
+      final notification = NotificationModel(
+        id: '',
+        type: type,
+        title: title,
+        message: message,
+        relatedId: transactionId,
+        relatedType: 'transaction',
+        userId: targetUserId,
+        createdAt: DateTime.now(),
+      );
+      await _firebaseService.createNotification(notification);
+    } catch (e) {
+      debugPrint('Error sending notification: $e');
+    }
   }
 
   @override
