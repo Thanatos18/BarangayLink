@@ -37,6 +37,7 @@ class _MainAppScreenState extends State<MainAppScreen> {
 
     // Initialize notifications
     WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (!mounted) return;
       final user = Provider.of<UserProvider>(
         context,
         listen: false,

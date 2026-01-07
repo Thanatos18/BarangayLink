@@ -22,7 +22,7 @@ class FavoritesProvider extends ChangeNotifier {
 
   void startListening(String userId) {
     _isLoading = true;
-    notifyListeners();
+    Future.microtask(() => notifyListeners());
 
     _firebaseService.getUserFavoritesStream(userId).listen(
       (favoritesData) {

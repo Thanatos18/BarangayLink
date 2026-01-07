@@ -302,14 +302,14 @@ class _ProfileScreenState extends State<ProfileScreen> {
                 final isFullStar = starIndex <= provider.averageRating.floor();
                 final isHalfStar =
                     starIndex == provider.averageRating.floor() + 1 &&
-                    provider.averageRating % 1 >= 0.5;
+                        provider.averageRating % 1 >= 0.5;
 
                 return Icon(
                   isFullStar
                       ? Icons.star
                       : isHalfStar
-                      ? Icons.star_half
-                      : Icons.star_border,
+                          ? Icons.star_half
+                          : Icons.star_border,
                   color: kAccentColor,
                   size: 24,
                 );
@@ -544,11 +544,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
           icon: const Icon(Icons.logout),
           label: const Text('Log Out'),
           onPressed: () {
-            Navigator.of(context).pushAndRemoveUntil(
-              MaterialPageRoute(builder: (context) => const LoginScreen()),
-              (route) => false,
-            );
-            userProvider.logout();
+            _showLogoutConfirmation(context, userProvider);
           },
           style: OutlinedButton.styleFrom(
             foregroundColor: Colors.red,
