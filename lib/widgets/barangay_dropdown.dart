@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:flutter_application_1/constants/app_constants.dart'; // Relative import
+import '../constants/app_constants.dart'; // Relative import
 
 class BarangayDropdown extends StatelessWidget {
   final String? selectedValue;

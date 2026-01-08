@@ -1,5 +1,5 @@
 import 'package:flutter_test/flutter_test.dart';
-import 'package:flutter_application_1/utils/validators.dart';
+import 'package:barangay_link/utils/validators.dart';
 
 void main() {
   group('Validators', () {
