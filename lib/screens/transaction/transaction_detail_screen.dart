@@ -509,8 +509,8 @@ class _TransactionDetailScreenState extends State<TransactionDetailScreen> {
         ),
       );
     }
-    // Mark as Completed button for In Progress transactions (initiator only)
-    else if (isInitiator && transaction.isInProgress) {
+    // Mark as Completed button for In Progress transactions (target/provider only)
+    else if (isTarget && transaction.isInProgress) {
       actionContent = SizedBox(
         width: double.infinity,
         child: ElevatedButton.icon(
