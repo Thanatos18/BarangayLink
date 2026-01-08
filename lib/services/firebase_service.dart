@@ -536,17 +536,28 @@ class FirebaseService {
           .count()
           .get();
 
-      final transactionsCount = await _db
+      final initiatedTransactionsCount = await _db
           .collection('barangay_transactions')
           .where('initiatedBy', isEqualTo: userId)
+          .where('status', isEqualTo: 'Completed')
           .count()
           .get();
+
+      final targetTransactionsCount = await _db
+          .collection('barangay_transactions')
+          .where('targetUser', isEqualTo: userId)
+          .where('status', isEqualTo: 'Completed')
+          .count()
+          .get();
+
+      final totalTransactions = (initiatedTransactionsCount.count ?? 0) +
+          (targetTransactionsCount.count ?? 0);
 
       return {
         'jobs': jobsCount.count ?? 0,
         'services': servicesCount.count ?? 0,
         'rentals': rentalsCount.count ?? 0,
-        'transactions': transactionsCount.count ?? 0,
+        'transactions': totalTransactions,
       };
     } catch (e) {
       throw Exception('Error getting user stats: $e');

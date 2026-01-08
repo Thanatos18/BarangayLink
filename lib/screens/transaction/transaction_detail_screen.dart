@@ -527,8 +527,8 @@ class _TransactionDetailScreenState extends State<TransactionDetailScreen> {
         ),
       );
     }
-    // Leave Feedback button for Completed transactions
-    else if (transaction.isCompleted) {
+    // Leave Feedback button for Completed transactions (Only Initiator/Customer reviews)
+    else if (isInitiator && transaction.isCompleted) {
       actionContent = SizedBox(
         width: double.infinity,
         child: OutlinedButton.icon(
