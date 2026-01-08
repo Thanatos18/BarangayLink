@@ -46,14 +46,37 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
         title: 'Notifications',
         showBackButton: true,
         actions: [
-          if (notificationProvider.hasUnread)
-            TextButton(
-              onPressed: () => notificationProvider.markAllAsRead(),
-              child: const Text(
-                'Mark all read',
-                style: TextStyle(color: Colors.white),
+          PopupMenuButton<String>(
+            onSelected: (value) async {
+              if (value == 'read') {
+                await notificationProvider.markAllAsRead();
+              } else if (value == 'clear') {
+                _showClearAllDialog(context, notificationProvider);
+              }
+            },
+            itemBuilder: (BuildContext context) => <PopupMenuEntry<String>>[
+              const PopupMenuItem<String>(
+                value: 'read',
+                child: Row(
+                  children: [
+                    Icon(Icons.check_circle_outline, color: Colors.grey),
+                    SizedBox(width: 8),
+                    Text('Mark all read'),
+                  ],
+                ),
               ),
-            ),
+              const PopupMenuItem<String>(
+                value: 'clear',
+                child: Row(
+                  children: [
+                    Icon(Icons.delete_sweep_outlined, color: Colors.red),
+                    SizedBox(width: 8),
+                    Text('Clear all'),
+                  ],
+                ),
+              ),
+            ],
+          ),
         ],
       ),
       body: _buildNotificationList(notificationProvider),
@@ -135,83 +158,135 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
     NotificationModel notification,
     NotificationProvider provider,
   ) {
-    return Card(
-      margin: const EdgeInsets.only(bottom: 8),
-      elevation: notification.isRead ? 0 : 2,
-      color: notification.isRead ? Colors.grey[50] : Colors.white,
-      shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(12),
-        side: BorderSide(
-          color: notification.isRead
-              ? Colors.grey.shade200
-              : kPrimaryColor.withOpacity(0.3),
-          width: notification.isRead ? 1 : 2,
+    return Dismissible(
+      key: Key(notification.id),
+      direction: DismissDirection.endToStart,
+      background: Container(
+        margin: const EdgeInsets.only(bottom: 8),
+        padding: const EdgeInsets.only(right: 20),
+        decoration: BoxDecoration(
+          color: Colors.red,
+          borderRadius: BorderRadius.circular(12),
         ),
+        alignment: Alignment.centerRight,
+        child: const Icon(Icons.delete, color: Colors.white),
       ),
-      child: InkWell(
-        onTap: () => _handleNotificationTap(notification, provider),
-        borderRadius: BorderRadius.circular(12),
-        child: Padding(
-          padding: const EdgeInsets.all(16),
-          child: Row(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              // Icon
-              Container(
-                padding: const EdgeInsets.all(10),
-                decoration: BoxDecoration(
-                  color: _getTypeColor(notification.type).withOpacity(0.1),
-                  borderRadius: BorderRadius.circular(10),
-                ),
-                child: Icon(
-                  _getTypeIcon(notification.type),
-                  color: _getTypeColor(notification.type),
-                  size: 24,
-                ),
-              ),
-              const SizedBox(width: 12),
-              // Content
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      notification.title,
-                      style: TextStyle(
-                        fontWeight: notification.isRead
-                            ? FontWeight.normal
-                            : FontWeight.bold,
-                        fontSize: 15,
-                      ),
-                    ),
-                    const SizedBox(height: 4),
-                    Text(
-                      notification.message,
-                      style: TextStyle(color: Colors.grey[600], fontSize: 13),
-                      maxLines: 2,
-                      overflow: TextOverflow.ellipsis,
-                    ),
-                    const SizedBox(height: 8),
-                    Text(
-                      _formatTime(notification.createdAt),
-                      style: TextStyle(color: Colors.grey[500], fontSize: 11),
-                    ),
-                  ],
-                ),
-              ),
-              // Unread Indicator
-              if (!notification.isRead)
-                Container(
-                  width: 10,
-                  height: 10,
-                  decoration: const BoxDecoration(
-                    color: kPrimaryColor,
-                    shape: BoxShape.circle,
-                  ),
-                ),
-            ],
+      onDismissed: (_) {
+        provider.deleteNotification(notification.id);
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('Notification removed'),
+            duration: Duration(seconds: 2),
+          ),
+        );
+      },
+      child: Card(
+        margin: const EdgeInsets.only(bottom: 8),
+        elevation: notification.isRead ? 0 : 2,
+        color: notification.isRead ? Colors.grey[50] : Colors.white,
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(12),
+          side: BorderSide(
+            color: notification.isRead
+                ? Colors.grey.shade200
+                : kPrimaryColor.withOpacity(0.3),
+            width: notification.isRead ? 1 : 2,
           ),
         ),
+        child: InkWell(
+          onTap: () => _handleNotificationTap(notification, provider),
+          borderRadius: BorderRadius.circular(12),
+          child: Padding(
+            padding: const EdgeInsets.all(16),
+            child: Row(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                // Icon
+                Container(
+                  padding: const EdgeInsets.all(10),
+                  decoration: BoxDecoration(
+                    color: _getTypeColor(notification.type).withOpacity(0.1),
+                    borderRadius: BorderRadius.circular(10),
+                  ),
+                  child: Icon(
+                    _getTypeIcon(notification.type),
+                    color: _getTypeColor(notification.type),
+                    size: 24,
+                  ),
+                ),
+                const SizedBox(width: 12),
+                // Content
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        notification.title,
+                        style: TextStyle(
+                          fontWeight: notification.isRead
+                              ? FontWeight.normal
+                              : FontWeight.bold,
+                          fontSize: 15,
+                        ),
+                      ),
+                      const SizedBox(height: 4),
+                      Text(
+                        notification.message,
+                        style: TextStyle(color: Colors.grey[600], fontSize: 13),
+                        maxLines: 2,
+                        overflow: TextOverflow.ellipsis,
+                      ),
+                      const SizedBox(height: 8),
+                      Text(
+                        _formatTime(notification.createdAt),
+                        style: TextStyle(color: Colors.grey[500], fontSize: 11),
+                      ),
+                    ],
+                  ),
+                ),
+                // Unread Indicator
+                if (!notification.isRead)
+                  Container(
+                    width: 10,
+                    height: 10,
+                    decoration: const BoxDecoration(
+                      color: kPrimaryColor,
+                      shape: BoxShape.circle,
+                    ),
+                  ),
+              ],
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+
+  void _showClearAllDialog(
+      BuildContext context, NotificationProvider provider) {
+    showDialog(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: const Text('Clear All Notifications?'),
+        content: const Text(
+          'This action cannot be undone. All your notifications will be permanently removed.',
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(ctx).pop(),
+            child: const Text('Cancel'),
+          ),
+          TextButton(
+            onPressed: () {
+              Navigator.of(ctx).pop();
+              provider.clearAllNotifications();
+              ScaffoldMessenger.of(context).showSnackBar(
+                const SnackBar(content: Text('All notifications cleared')),
+              );
+            },
+            child: const Text('Clear All', style: TextStyle(color: Colors.red)),
+          ),
+        ],
       ),
     );
   }

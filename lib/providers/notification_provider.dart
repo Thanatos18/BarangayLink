@@ -69,22 +69,21 @@ class NotificationProvider extends ChangeNotifier {
     _errorMessage = null;
     notifyListeners();
 
-    _notificationSubscription = _firebaseService
-        .getUserNotificationsStream(userId)
-        .listen(
-          (notifications) {
-            _notifications = notifications;
-            _unreadCount = notifications.where((n) => !n.isRead).length;
-            _isLoading = false;
-            _errorMessage = null;
-            notifyListeners();
-          },
-          onError: (error) {
-            _errorMessage = 'Error loading notifications: $error';
-            _isLoading = false;
-            notifyListeners();
-          },
-        );
+    _notificationSubscription =
+        _firebaseService.getUserNotificationsStream(userId).listen(
+      (notifications) {
+        _notifications = notifications;
+        _unreadCount = notifications.where((n) => !n.isRead).length;
+        _isLoading = false;
+        _errorMessage = null;
+        notifyListeners();
+      },
+      onError: (error) {
+        _errorMessage = 'Error loading notifications: $error';
+        _isLoading = false;
+        notifyListeners();
+      },
+    );
   }
 
   /// Stop listening to notifications
@@ -122,9 +121,8 @@ class NotificationProvider extends ChangeNotifier {
       await _firebaseService.markAllNotificationsAsRead(_currentUserId!);
 
       // Update local state
-      _notifications = _notifications
-          .map((n) => n.copyWith(isRead: true))
-          .toList();
+      _notifications =
+          _notifications.map((n) => n.copyWith(isRead: true)).toList();
       _unreadCount = 0;
       notifyListeners();
     } catch (e) {
@@ -157,6 +155,36 @@ class NotificationProvider extends ChangeNotifier {
       await _firebaseService.createNotification(notification);
     } catch (e) {
       debugPrint('Error creating notification: $e');
+    }
+  }
+
+  /// Delete a notification
+  Future<void> deleteNotification(String notificationId) async {
+    try {
+      await _firebaseService.deleteNotification(notificationId);
+
+      _notifications.removeWhere((n) => n.id == notificationId);
+      _unreadCount = _notifications.where((n) => !n.isRead).length;
+      notifyListeners();
+    } catch (e) {
+      _errorMessage = 'Error deleting notification: $e';
+      notifyListeners();
+    }
+  }
+
+  /// Clear all notifications
+  Future<void> clearAllNotifications() async {
+    if (_currentUserId == null) return;
+
+    try {
+      await _firebaseService.clearAllNotifications(_currentUserId!);
+
+      _notifications.clear();
+      _unreadCount = 0;
+      notifyListeners();
+    } catch (e) {
+      _errorMessage = 'Error clearing notifications: $e';
+      notifyListeners();
     }
   }
 

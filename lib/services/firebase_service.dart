@@ -946,6 +946,37 @@ class FirebaseService {
     }
   }
 
+  /// Delete a single notification
+  Future<void> deleteNotification(String notificationId) async {
+    try {
+      await _db
+          .collection('barangay_notifications')
+          .doc(notificationId)
+          .delete();
+    } catch (e) {
+      throw Exception('Error deleting notification: $e');
+    }
+  }
+
+  /// Clear all notifications for a user
+  Future<void> clearAllNotifications(String userId) async {
+    try {
+      final batch = _db.batch();
+      final snapshot = await _db
+          .collection('barangay_notifications')
+          .where('userId', isEqualTo: userId)
+          .get();
+
+      for (var doc in snapshot.docs) {
+        batch.delete(doc.reference);
+      }
+
+      await batch.commit();
+    } catch (e) {
+      throw Exception('Error clearing all notifications: $e');
+    }
+  }
+
   // --- Favorites ---
 
   /// Toggle Favorite
