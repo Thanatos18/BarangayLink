@@ -135,6 +135,23 @@ class FirebaseService {
       };
 
       batch.set(transRef, transactionData);
+
+      // Create Notification for the Poster
+      DocumentReference notifRef =
+          _db.collection('barangay_notifications').doc();
+      NotificationModel notification = NotificationModel(
+        id: notifRef.id,
+        type: NotificationType.newApplication,
+        title: 'New Job Application',
+        message: '$applicantName applied for $jobTitle',
+        relatedId: jobId,
+        relatedType: 'job',
+        userId: posterId,
+        isRead: false,
+        createdAt: DateTime.now(),
+      );
+      batch.set(notifRef, notification.toMap());
+
       await batch.commit();
     } catch (e) {
       throw Exception('Error applying to job: $e');
@@ -231,6 +248,19 @@ class FirebaseService {
       };
 
       await transRef.set(transactionData);
+
+      // Create Notification for the Provider
+      await createNotification(NotificationModel(
+        id: '',
+        type: NotificationType.newApplication,
+        title: 'New Service Booking',
+        message: '$clientName booked $serviceName',
+        relatedId: serviceId,
+        relatedType: 'service',
+        userId: providerId,
+        isRead: false,
+        createdAt: DateTime.now(),
+      ));
     } catch (e) {
       throw Exception('Error booking service: $e');
     }
@@ -322,6 +352,19 @@ class FirebaseService {
       };
 
       await transRef.set(transactionData);
+
+      // Create Notification for the Owner
+      await createNotification(NotificationModel(
+        id: '',
+        type: NotificationType.newApplication,
+        title: 'New Rental Request',
+        message: '$renterName requested $itemName',
+        relatedId: rentalId,
+        relatedType: 'rental',
+        userId: ownerId,
+        isRead: false,
+        createdAt: DateTime.now(),
+      ));
     } catch (e) {
       throw Exception('Error requesting rental: $e');
     }
@@ -418,10 +461,55 @@ class FirebaseService {
     String newStatus,
   ) async {
     try {
+      // Fetch transaction to identify parties
+      final transDoc = await _db
+          .collection('barangay_transactions')
+          .doc(transactionId)
+          .get();
+      if (!transDoc.exists) return;
+
+      final data = transDoc.data()!;
+      final initiatedBy = data['initiatedBy'] as String;
+      final relatedName = data['relatedName'] as String? ?? 'Item';
+      final type = data['type'] as String;
+
+      // Determine navigation target type
+      String notifRelatedType = 'transaction';
+      if (type == 'job_application')
+        notifRelatedType = 'job';
+      else if (type == 'service_booking')
+        notifRelatedType = 'service';
+      else if (type == 'rental_request') notifRelatedType = 'rental';
+
+      String? notifyUserId;
+      String message = 'Status updated to $newStatus';
+
+      if (newStatus == 'Accepted') {
+        notifyUserId = initiatedBy;
+        message = 'Your request for $relatedName was Accepted';
+      } else if (newStatus == 'In Progress') {
+        notifyUserId = initiatedBy;
+        message = '$relatedName is now In Progress';
+      }
+
       await _db.collection('barangay_transactions').doc(transactionId).update({
         'status': newStatus,
         'updatedAt': Timestamp.now(),
       });
+
+      if (notifyUserId != null) {
+        await createNotification(NotificationModel(
+          id: '',
+          type: NotificationType.transactionUpdate,
+          title: 'Transaction Update',
+          message: message,
+          relatedId: data['relatedId'] as String?,
+          relatedType: notifRelatedType,
+          userId: notifyUserId,
+          isRead: false,
+          createdAt: DateTime.now(),
+        ));
+      }
     } catch (e) {
       throw Exception('Error updating transaction status: $e');
     }
@@ -430,11 +518,43 @@ class FirebaseService {
   /// Confirm payment - sets paymentStatus to "Paid" and status to "In Progress"
   Future<void> confirmPayment(String transactionId) async {
     try {
+      // Fetch transaction to identify provider
+      final transDoc = await _db
+          .collection('barangay_transactions')
+          .doc(transactionId)
+          .get();
+      if (!transDoc.exists) throw Exception('Transaction not found');
+
+      final data = transDoc.data()!;
+      final targetUser = data['targetUser'] as String;
+      final relatedName = data['relatedName'] as String? ?? 'Transaction';
+      final type = data['type'] as String;
+
+      String notifRelatedType = 'transaction';
+      if (type == 'job_application')
+        notifRelatedType = 'job';
+      else if (type == 'service_booking')
+        notifRelatedType = 'service';
+      else if (type == 'rental_request') notifRelatedType = 'rental';
+
       await _db.collection('barangay_transactions').doc(transactionId).update({
         'paymentStatus': 'Paid',
         'status': 'In Progress',
         'updatedAt': Timestamp.now(),
       });
+
+      // Notify Provider
+      await createNotification(NotificationModel(
+        id: '',
+        type: NotificationType.paymentReceived,
+        title: 'Payment Received',
+        message: 'Payment confirmed for $relatedName',
+        relatedId: data['relatedId'] as String?,
+        relatedType: notifRelatedType,
+        userId: targetUser,
+        isRead: false,
+        createdAt: DateTime.now(),
+      ));
     } catch (e) {
       throw Exception('Error confirming payment: $e');
     }
@@ -443,11 +563,43 @@ class FirebaseService {
   /// Complete transaction - sets status to "Completed" and adds completedAt timestamp
   Future<void> completeTransaction(String transactionId) async {
     try {
+      // Fetch transaction to identify client
+      final transDoc = await _db
+          .collection('barangay_transactions')
+          .doc(transactionId)
+          .get();
+      if (!transDoc.exists) throw Exception('Transaction not found');
+
+      final data = transDoc.data()!;
+      final initiatedBy = data['initiatedBy'] as String;
+      final relatedName = data['relatedName'] as String? ?? 'Transaction';
+      final type = data['type'] as String;
+
+      String notifRelatedType = 'transaction';
+      if (type == 'job_application')
+        notifRelatedType = 'job';
+      else if (type == 'service_booking')
+        notifRelatedType = 'service';
+      else if (type == 'rental_request') notifRelatedType = 'rental';
+
       await _db.collection('barangay_transactions').doc(transactionId).update({
         'status': 'Completed',
         'completedAt': Timestamp.now(),
         'updatedAt': Timestamp.now(),
       });
+
+      // Notify Client
+      await createNotification(NotificationModel(
+        id: '',
+        type: NotificationType.transactionUpdate,
+        title: 'Transaction Completed',
+        message: '$relatedName has been marked as completed',
+        relatedId: data['relatedId'] as String?,
+        relatedType: notifRelatedType,
+        userId: initiatedBy,
+        isRead: false,
+        createdAt: DateTime.now(),
+      ));
     } catch (e) {
       throw Exception('Error completing transaction: $e');
     }
