@@ -159,31 +159,49 @@ class NotificationProvider extends ChangeNotifier {
   }
 
   /// Delete a notification
-  Future<void> deleteNotification(String notificationId) async {
+  Future<bool> deleteNotification(String notificationId) async {
+    // Optimistic remove
+    final index = _notifications.indexWhere((n) => n.id == notificationId);
+    if (index == -1) return false;
+
+    final removedItem = _notifications[index];
+    _notifications.removeAt(index);
+    _unreadCount = _notifications.where((n) => !n.isRead).length;
+    notifyListeners();
+
     try {
       await _firebaseService.deleteNotification(notificationId);
-
-      _notifications.removeWhere((n) => n.id == notificationId);
-      _unreadCount = _notifications.where((n) => !n.isRead).length;
-      notifyListeners();
+      return true;
     } catch (e) {
-      _errorMessage = 'Error deleting notification: $e';
+      // Rollback if failed
+      debugPrint('Error deleting notification: $e');
+      _notifications.insert(index, removedItem);
+      _unreadCount = _notifications.where((n) => !n.isRead).length;
+      _errorMessage = 'Failed to delete: $e'; // Show exact error
       notifyListeners();
+      return false;
     }
   }
 
   /// Clear all notifications
   Future<void> clearAllNotifications() async {
     if (_currentUserId == null) return;
+    if (_notifications.isEmpty) return;
+
+    // Optimistic clear
+    final backups = List<NotificationModel>.from(_notifications);
+    _notifications.clear();
+    _unreadCount = 0;
+    notifyListeners();
 
     try {
       await _firebaseService.clearAllNotifications(_currentUserId!);
-
-      _notifications.clear();
-      _unreadCount = 0;
-      notifyListeners();
     } catch (e) {
-      _errorMessage = 'Error clearing notifications: $e';
+      // Rollback
+      debugPrint('Error clearing notifications: $e');
+      _notifications = backups;
+      _unreadCount = _notifications.where((n) => !n.isRead).length;
+      _errorMessage = 'Failed to clear notifications';
       notifyListeners();
     }
   }

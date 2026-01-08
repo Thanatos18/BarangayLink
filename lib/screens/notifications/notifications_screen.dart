@@ -171,14 +171,23 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
         alignment: Alignment.centerRight,
         child: const Icon(Icons.delete, color: Colors.white),
       ),
-      onDismissed: (_) {
-        provider.deleteNotification(notification.id);
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text('Notification removed'),
-            duration: Duration(seconds: 2),
-          ),
-        );
+      onDismissed: (_) async {
+        final success = await provider.deleteNotification(notification.id);
+        if (success) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(
+              content: Text('Notification removed'),
+              duration: Duration(seconds: 2),
+            ),
+          );
+        } else {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text('Failed to delete: ${provider.errorMessage}'),
+              backgroundColor: Colors.red,
+            ),
+          );
+        }
       },
       child: Card(
         margin: const EdgeInsets.only(bottom: 8),

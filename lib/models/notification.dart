@@ -105,9 +105,9 @@ class NotificationModel {
     );
   }
 
-  NotificationModel copyWith({bool? isRead}) {
+  NotificationModel copyWith({String? id, bool? isRead}) {
     return NotificationModel(
-      id: id,
+      id: id ?? this.id,
       type: type,
       title: title,
       message: message,

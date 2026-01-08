@@ -879,7 +879,10 @@ class FirebaseService {
   /// Create a notification for a user
   Future<void> createNotification(NotificationModel notification) async {
     try {
-      await _db.collection('barangay_notifications').add(notification.toMap());
+      // Use doc() to generate ID, then set() to ensure ID is consistent
+      final docRef = _db.collection('barangay_notifications').doc();
+      final newNotification = notification.copyWith(id: docRef.id);
+      await docRef.set(newNotification.toMap());
     } catch (e) {
       throw Exception('Error creating notification: $e');
     }
