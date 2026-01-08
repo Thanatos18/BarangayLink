@@ -11,6 +11,8 @@ import '../../providers/rentals_provider.dart';
 import '../details/job_detail_screen.dart';
 import '../details/service_detail_screen.dart';
 import '../details/rental_detail_screen.dart';
+import '../../providers/transaction_provider.dart';
+import '../transaction/transaction_detail_screen.dart';
 
 class NotificationsScreen extends StatefulWidget {
   const NotificationsScreen({super.key});
@@ -171,23 +173,16 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
         alignment: Alignment.centerRight,
         child: const Icon(Icons.delete, color: Colors.white),
       ),
-      onDismissed: (_) async {
-        final success = await provider.deleteNotification(notification.id);
-        if (success) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(
-              content: Text('Notification removed'),
-              duration: Duration(seconds: 2),
-            ),
-          );
-        } else {
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(
-              content: Text('Failed to delete: ${provider.errorMessage}'),
-              backgroundColor: Colors.red,
-            ),
-          );
-        }
+      confirmDismiss: (_) async {
+        return await provider.deleteNotification(notification.id);
+      },
+      onDismissed: (_) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('Notification removed'),
+            duration: Duration(seconds: 2),
+          ),
+        );
       },
       child: Card(
         margin: const EdgeInsets.only(bottom: 8),
@@ -198,24 +193,23 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
           side: BorderSide(
             color: notification.isRead
                 ? Colors.grey.shade200
-                : kPrimaryColor.withOpacity(0.3),
-            width: notification.isRead ? 1 : 2,
+                : Colors.grey.shade300,
           ),
         ),
         child: InkWell(
-          onTap: () => _handleNotificationTap(notification, provider),
           borderRadius: BorderRadius.circular(12),
+          onTap: () => _handleNotificationTap(notification, provider),
           child: Padding(
             padding: const EdgeInsets.all(16),
             child: Row(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                // Icon
+                // Icon based on type
                 Container(
                   padding: const EdgeInsets.all(10),
                   decoration: BoxDecoration(
                     color: _getTypeColor(notification.type).withOpacity(0.1),
-                    borderRadius: BorderRadius.circular(10),
+                    borderRadius: BorderRadius.circular(8),
                   ),
                   child: Icon(
                     _getTypeIcon(notification.type),
@@ -223,7 +217,8 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
                     size: 24,
                   ),
                 ),
-                const SizedBox(width: 12),
+
+                const SizedBox(width: 16),
                 // Content
                 Expanded(
                   child: Column(
@@ -235,15 +230,16 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
                           fontWeight: notification.isRead
                               ? FontWeight.normal
                               : FontWeight.bold,
-                          fontSize: 15,
+                          fontSize: 16,
+                          color: notification.isRead
+                              ? Colors.grey[800]
+                              : Colors.black,
                         ),
                       ),
                       const SizedBox(height: 4),
                       Text(
                         notification.message,
-                        style: TextStyle(color: Colors.grey[600], fontSize: 13),
-                        maxLines: 2,
-                        overflow: TextOverflow.ellipsis,
+                        style: TextStyle(color: Colors.grey[600], fontSize: 14),
                       ),
                       const SizedBox(height: 8),
                       Text(
@@ -272,7 +268,9 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
   }
 
   void _showClearAllDialog(
-      BuildContext context, NotificationProvider provider) {
+    BuildContext context,
+    NotificationProvider provider,
+  ) {
     showDialog(
       context: context,
       builder: (ctx) => AlertDialog(
@@ -300,68 +298,101 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
     );
   }
 
-  void _handleNotificationTap(
+  Future<void> _handleNotificationTap(
     NotificationModel notification,
     NotificationProvider provider,
-  ) {
+  ) async {
     // Mark as read
     if (!notification.isRead) {
       provider.markAsRead(notification.id);
     }
 
-    // Navigate based on related type
-    if (notification.relatedId != null && notification.relatedType != null) {
-      // Determine destination
+    if (notification.relatedId == null || notification.relatedType == null)
+      return;
+
+    final String relatedId = notification.relatedId!;
+
+    try {
+      showDialog(
+        context: context,
+        barrierDismissible: false,
+        builder: (context) => const Center(child: CircularProgressIndicator()),
+      );
+
       Widget? destination;
+      bool notFound = false;
+
       switch (notification.relatedType) {
         case 'job':
-          final job = Provider.of<JobsProvider>(
+          final job = await Provider.of<JobsProvider>(
             context,
             listen: false,
-          ).getJobById(notification.relatedId!);
-          if (job != null) destination = JobDetailScreen(job: job);
+          ).fetchJobById(relatedId);
+          if (job != null) {
+            destination = JobDetailScreen(job: job);
+          } else {
+            notFound = true;
+          }
           break;
+
         case 'service':
-          final service = Provider.of<ServicesProvider>(
+          final service = await Provider.of<ServicesProvider>(
             context,
             listen: false,
-          ).getServiceById(notification.relatedId!);
-          if (service != null)
+          ).fetchServiceById(relatedId);
+          if (service != null) {
             destination = ServiceDetailScreen(service: service);
+          } else {
+            notFound = true;
+          }
           break;
+
         case 'rental':
-          final rental = Provider.of<RentalsProvider>(
+          final rental = await Provider.of<RentalsProvider>(
             context,
             listen: false,
-          ).getRentalById(notification.relatedId!);
-          if (rental != null) destination = RentalDetailScreen(rental: rental);
+          ).fetchRentalById(relatedId);
+          if (rental != null) {
+            destination = RentalDetailScreen(rental: rental);
+          } else {
+            notFound = true;
+          }
           break;
+
         case 'transaction':
-          // Fetch transaction via provider or service if needed,
-          // for now assuming we might pass ID or fetch in detail screen.
-          // Since TransactionDetailScreen needs a TransactionModel, we might need to fetch it.
-          // For simplicity, we'll try to find it in TransactionProvider if available, or just show not implemented if complex.
-          // Assuming TransactionProvider has it loaded or we can fetch.
-          // Let's safe check.
-          ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(content: Text('Opening Transaction Details...')),
-          );
-          // Actual navigation would require fetching the transaction object first
+          final transaction = await Provider.of<TransactionProvider>(
+            context,
+            listen: false,
+          ).getTransactionById(relatedId);
+          if (transaction != null) {
+            destination = TransactionDetailScreen(transaction: transaction);
+          } else {
+            notFound = true;
+          }
           break;
       }
 
       if (destination != null) {
+        Navigator.of(context).pop(); // Close loading dialog
         Navigator.push(
           context,
           MaterialPageRoute(builder: (_) => destination!),
         );
       } else if (notification.relatedType != 'transaction') {
+        Navigator.of(context).pop(); // Close loading dialog
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(
             content: Text('Item not found or no longer available'),
           ),
         );
+      } else {
+        Navigator.of(context).pop(); // Close loading dialog
       }
+    } catch (e) {
+      Navigator.of(context).pop(); // Close loading dialog
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text('Error: $e')));
     }
   }
 

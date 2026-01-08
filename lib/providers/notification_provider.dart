@@ -69,21 +69,22 @@ class NotificationProvider extends ChangeNotifier {
     _errorMessage = null;
     notifyListeners();
 
-    _notificationSubscription =
-        _firebaseService.getUserNotificationsStream(userId).listen(
-      (notifications) {
-        _notifications = notifications;
-        _unreadCount = notifications.where((n) => !n.isRead).length;
-        _isLoading = false;
-        _errorMessage = null;
-        notifyListeners();
-      },
-      onError: (error) {
-        _errorMessage = 'Error loading notifications: $error';
-        _isLoading = false;
-        notifyListeners();
-      },
-    );
+    _notificationSubscription = _firebaseService
+        .getUserNotificationsStream(userId)
+        .listen(
+          (notifications) {
+            _notifications = notifications;
+            _unreadCount = notifications.where((n) => !n.isRead).length;
+            _isLoading = false;
+            _errorMessage = null;
+            notifyListeners();
+          },
+          onError: (error) {
+            _errorMessage = 'Error loading notifications: $error';
+            _isLoading = false;
+            notifyListeners();
+          },
+        );
   }
 
   /// Stop listening to notifications
@@ -121,8 +122,9 @@ class NotificationProvider extends ChangeNotifier {
       await _firebaseService.markAllNotificationsAsRead(_currentUserId!);
 
       // Update local state
-      _notifications =
-          _notifications.map((n) => n.copyWith(isRead: true)).toList();
+      _notifications = _notifications
+          .map((n) => n.copyWith(isRead: true))
+          .toList();
       _unreadCount = 0;
       notifyListeners();
     } catch (e) {
@@ -160,24 +162,17 @@ class NotificationProvider extends ChangeNotifier {
 
   /// Delete a notification
   Future<bool> deleteNotification(String notificationId) async {
-    // Optimistic remove
-    final index = _notifications.indexWhere((n) => n.id == notificationId);
-    if (index == -1) return false;
-
-    final removedItem = _notifications[index];
-    _notifications.removeAt(index);
-    _unreadCount = _notifications.where((n) => !n.isRead).length;
-    notifyListeners();
-
     try {
       await _firebaseService.deleteNotification(notificationId);
+
+      // Update local state after success
+      _notifications.removeWhere((n) => n.id == notificationId);
+      _unreadCount = _notifications.where((n) => !n.isRead).length;
+      notifyListeners();
       return true;
     } catch (e) {
-      // Rollback if failed
       debugPrint('Error deleting notification: $e');
-      _notifications.insert(index, removedItem);
-      _unreadCount = _notifications.where((n) => !n.isRead).length;
-      _errorMessage = 'Failed to delete: $e'; // Show exact error
+      _errorMessage = 'Failed to delete: $e';
       notifyListeners();
       return false;
     }

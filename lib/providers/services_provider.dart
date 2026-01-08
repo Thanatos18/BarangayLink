@@ -1,5 +1,6 @@
 import 'dart:async';
 import 'package:flutter/material.dart';
+import 'package:flutter/foundation.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import '../models/service.dart';
 import '../services/firebase_service.dart';
@@ -67,24 +68,28 @@ class ServicesProvider extends ChangeNotifier {
   /// Initialize services stream subscription
   void _initializeServices() {
     _setLoading(true);
-    _servicesSubscription = _firebaseService.getServicesStream(null).listen(
-      (services) {
-        _allServices = services;
-        _applyFilters();
-        _setLoading(false);
-      },
-      onError: (error) {
-        _setError('Error loading services: $error');
-        _setLoading(false);
-      },
-    );
+    _servicesSubscription = _firebaseService
+        .getServicesStream(null)
+        .listen(
+          (services) {
+            _allServices = services;
+            _applyFilters();
+            _setLoading(false);
+          },
+          onError: (error) {
+            _setError('Error loading services: $error');
+            _setLoading(false);
+          },
+        );
   }
 
   /// Fetch dynamic categories from Firestore
   Future<void> _fetchCategories() async {
     try {
-      final doc =
-          await _db.collection('app_config').doc('service_categories').get();
+      final doc = await _db
+          .collection('app_config')
+          .doc('service_categories')
+          .get();
       if (doc.exists && doc.data() != null) {
         final data = doc.data()!;
         if (data['categories'] is List) {
@@ -251,7 +256,9 @@ class ServicesProvider extends ChangeNotifier {
 
   /// Update an existing service
   Future<void> updateService(
-      String serviceId, Map<String, dynamic> data) async {
+    String serviceId,
+    Map<String, dynamic> data,
+  ) async {
     _setLoading(true);
     _setError(null);
     try {
@@ -311,11 +318,26 @@ class ServicesProvider extends ChangeNotifier {
     }
   }
 
-  /// Get a single service by ID
+  /// Get a single service by ID (local)
   ServiceModel? getServiceById(String serviceId) {
     try {
       return _allServices.firstWhere((service) => service.id == serviceId);
     } catch (e) {
+      return null;
+    }
+  }
+
+  /// Fetch a single service by ID (local or remote)
+  Future<ServiceModel?> fetchServiceById(String serviceId) async {
+    // Try local first
+    final localService = getServiceById(serviceId);
+    if (localService != null) return localService;
+
+    // Fetch from Firebase
+    try {
+      return await _firebaseService.getService(serviceId);
+    } catch (e) {
+      debugPrint('Error fetching service: $e');
       return null;
     }
   }

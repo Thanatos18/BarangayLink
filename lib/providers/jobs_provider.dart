@@ -1,5 +1,6 @@
 import 'dart:async';
 import 'package:flutter/material.dart';
+import 'package:flutter/foundation.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import '../models/job.dart';
 import '../services/firebase_service.dart';
@@ -67,24 +68,28 @@ class JobsProvider extends ChangeNotifier {
   /// Initialize jobs stream subscription
   void _initializeJobs() {
     _setLoading(true);
-    _jobsSubscription = _firebaseService.getJobsStream(null).listen(
-      (jobs) {
-        _allJobs = jobs;
-        _applyFilters();
-        _setLoading(false);
-      },
-      onError: (error) {
-        _setError('Error loading jobs: $error');
-        _setLoading(false);
-      },
-    );
+    _jobsSubscription = _firebaseService
+        .getJobsStream(null)
+        .listen(
+          (jobs) {
+            _allJobs = jobs;
+            _applyFilters();
+            _setLoading(false);
+          },
+          onError: (error) {
+            _setError('Error loading jobs: $error');
+            _setLoading(false);
+          },
+        );
   }
 
   /// Fetch dynamic categories from Firestore
   Future<void> _fetchCategories() async {
     try {
-      final doc =
-          await _db.collection('app_config').doc('job_categories').get();
+      final doc = await _db
+          .collection('app_config')
+          .doc('job_categories')
+          .get();
       if (doc.exists && doc.data() != null) {
         final data = doc.data()!;
         if (data['categories'] is List) {
@@ -122,7 +127,7 @@ class JobsProvider extends ChangeNotifier {
         'Tutoring',
         'Cleaning',
         'Repair',
-        'Other'
+        'Other',
       ];
       notifyListeners();
     }
@@ -319,11 +324,26 @@ class JobsProvider extends ChangeNotifier {
     return job.applicants.any((applicant) => applicant.userId == userId);
   }
 
-  /// Get a single job by ID
+  /// Get a single job by ID (local)
   JobModel? getJobById(String jobId) {
     try {
       return _allJobs.firstWhere((job) => job.id == jobId);
     } catch (e) {
+      return null;
+    }
+  }
+
+  /// Fetch a single job by ID (local or remote)
+  Future<JobModel?> fetchJobById(String jobId) async {
+    // Try local first
+    final localJob = getJobById(jobId);
+    if (localJob != null) return localJob;
+
+    // Fetch from Firebase
+    try {
+      return await _firebaseService.getJob(jobId);
+    } catch (e) {
+      debugPrint('Error fetching job: $e');
       return null;
     }
   }

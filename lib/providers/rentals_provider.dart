@@ -1,5 +1,6 @@
 import 'dart:async';
 import 'package:flutter/material.dart';
+import 'package:flutter/foundation.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import '../models/rental.dart';
 import '../services/firebase_service.dart';
@@ -70,24 +71,28 @@ class RentalsProvider extends ChangeNotifier {
   /// Initialize rentals stream subscription
   void _initializeRentals() {
     _setLoading(true);
-    _rentalsSubscription = _firebaseService.getRentalsStream(null).listen(
-      (rentals) {
-        _allRentals = rentals;
-        _applyFilters();
-        _setLoading(false);
-      },
-      onError: (error) {
-        _setError('Error loading rentals: $error');
-        _setLoading(false);
-      },
-    );
+    _rentalsSubscription = _firebaseService
+        .getRentalsStream(null)
+        .listen(
+          (rentals) {
+            _allRentals = rentals;
+            _applyFilters();
+            _setLoading(false);
+          },
+          onError: (error) {
+            _setError('Error loading rentals: $error');
+            _setLoading(false);
+          },
+        );
   }
 
   /// Fetch dynamic categories from Firestore
   Future<void> _fetchCategories() async {
     try {
-      final doc =
-          await _db.collection('app_config').doc('rental_categories').get();
+      final doc = await _db
+          .collection('app_config')
+          .doc('rental_categories')
+          .get();
       if (doc.exists && doc.data() != null) {
         final data = doc.data()!;
         if (data['categories'] is List) {
@@ -321,11 +326,26 @@ class RentalsProvider extends ChangeNotifier {
     }
   }
 
-  /// Get a single rental by ID
+  /// Get a single rental by ID (local)
   RentalModel? getRentalById(String rentalId) {
     try {
       return _allRentals.firstWhere((rental) => rental.id == rentalId);
     } catch (e) {
+      return null;
+    }
+  }
+
+  /// Fetch a single rental by ID (local or remote)
+  Future<RentalModel?> fetchRentalById(String rentalId) async {
+    // Try local first
+    final localRental = getRentalById(rentalId);
+    if (localRental != null) return localRental;
+
+    // Fetch from Firebase
+    try {
+      return await _firebaseService.getRental(rentalId);
+    } catch (e) {
+      debugPrint('Error fetching rental: $e');
       return null;
     }
   }

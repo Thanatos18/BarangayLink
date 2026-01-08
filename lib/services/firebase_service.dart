@@ -13,7 +13,7 @@ import '../models/favorite.dart';
 class FirebaseService {
   final FirebaseFirestore _db = FirebaseFirestore.instance;
 
-// ... (existing code matches)
+  // ... (existing code matches)
 
   // --- USER METHODS ---
 
@@ -61,8 +61,9 @@ class FirebaseService {
   }
 
   Stream<List<JobModel>> getJobsStream(String? barangayFilter) {
-    Query query =
-        _db.collection('barangay_jobs').orderBy('createdAt', descending: true);
+    Query query = _db
+        .collection('barangay_jobs')
+        .orderBy('createdAt', descending: true);
 
     if (barangayFilter != null && barangayFilter != 'All Tagum City') {
       query = query.where('barangay', isEqualTo: barangayFilter);
@@ -115,8 +116,9 @@ class FirebaseService {
         'applicants': FieldValue.arrayUnion([newApplicant.toMap()]),
       });
 
-      DocumentReference transRef =
-          _db.collection('barangay_transactions').doc();
+      DocumentReference transRef = _db
+          .collection('barangay_transactions')
+          .doc();
 
       Map<String, dynamic> transactionData = {
         'type': 'job_application',
@@ -137,8 +139,9 @@ class FirebaseService {
       batch.set(transRef, transactionData);
 
       // Create Notification for the Poster
-      DocumentReference notifRef =
-          _db.collection('barangay_notifications').doc();
+      DocumentReference notifRef = _db
+          .collection('barangay_notifications')
+          .doc();
       NotificationModel notification = NotificationModel(
         id: notifRef.id,
         type: NotificationType.newApplication,
@@ -171,8 +174,10 @@ class FirebaseService {
 
   Future<ServiceModel?> getService(String serviceId) async {
     try {
-      final doc =
-          await _db.collection('barangay_services').doc(serviceId).get();
+      final doc = await _db
+          .collection('barangay_services')
+          .doc(serviceId)
+          .get();
       if (doc.exists) {
         return ServiceModel.fromMap(doc.data() as Map<String, dynamic>, doc.id);
       }
@@ -228,8 +233,9 @@ class FirebaseService {
     required double rate,
   }) async {
     try {
-      DocumentReference transRef =
-          _db.collection('barangay_transactions').doc();
+      DocumentReference transRef = _db
+          .collection('barangay_transactions')
+          .doc();
 
       Map<String, dynamic> transactionData = {
         'type': 'service_booking',
@@ -250,17 +256,19 @@ class FirebaseService {
       await transRef.set(transactionData);
 
       // Create Notification for the Provider
-      await createNotification(NotificationModel(
-        id: '',
-        type: NotificationType.newApplication,
-        title: 'New Service Booking',
-        message: '$clientName booked $serviceName',
-        relatedId: serviceId,
-        relatedType: 'service',
-        userId: providerId,
-        isRead: false,
-        createdAt: DateTime.now(),
-      ));
+      await createNotification(
+        NotificationModel(
+          id: '',
+          type: NotificationType.newApplication,
+          title: 'New Service Booking',
+          message: '$clientName booked $serviceName',
+          relatedId: serviceId,
+          relatedType: 'service',
+          userId: providerId,
+          isRead: false,
+          createdAt: DateTime.now(),
+        ),
+      );
     } catch (e) {
       throw Exception('Error booking service: $e');
     }
@@ -332,8 +340,9 @@ class FirebaseService {
     required double rentPrice,
   }) async {
     try {
-      DocumentReference transRef =
-          _db.collection('barangay_transactions').doc();
+      DocumentReference transRef = _db
+          .collection('barangay_transactions')
+          .doc();
 
       Map<String, dynamic> transactionData = {
         'type': 'rental_request',
@@ -354,17 +363,19 @@ class FirebaseService {
       await transRef.set(transactionData);
 
       // Create Notification for the Owner
-      await createNotification(NotificationModel(
-        id: '',
-        type: NotificationType.newApplication,
-        title: 'New Rental Request',
-        message: '$renterName requested $itemName',
-        relatedId: rentalId,
-        relatedType: 'rental',
-        userId: ownerId,
-        isRead: false,
-        createdAt: DateTime.now(),
-      ));
+      await createNotification(
+        NotificationModel(
+          id: '',
+          type: NotificationType.newApplication,
+          title: 'New Rental Request',
+          message: '$renterName requested $itemName',
+          relatedId: rentalId,
+          relatedType: 'rental',
+          userId: ownerId,
+          isRead: false,
+          createdAt: DateTime.now(),
+        ),
+      );
     } catch (e) {
       throw Exception('Error requesting rental: $e');
     }
@@ -471,15 +482,6 @@ class FirebaseService {
       final data = transDoc.data()!;
       final initiatedBy = data['initiatedBy'] as String;
       final relatedName = data['relatedName'] as String? ?? 'Item';
-      final type = data['type'] as String;
-
-      // Determine navigation target type
-      String notifRelatedType = 'transaction';
-      if (type == 'job_application')
-        notifRelatedType = 'job';
-      else if (type == 'service_booking')
-        notifRelatedType = 'service';
-      else if (type == 'rental_request') notifRelatedType = 'rental';
 
       String? notifyUserId;
       String message = 'Status updated to $newStatus';
@@ -498,17 +500,19 @@ class FirebaseService {
       });
 
       if (notifyUserId != null) {
-        await createNotification(NotificationModel(
-          id: '',
-          type: NotificationType.transactionUpdate,
-          title: 'Transaction Update',
-          message: message,
-          relatedId: data['relatedId'] as String?,
-          relatedType: notifRelatedType,
-          userId: notifyUserId,
-          isRead: false,
-          createdAt: DateTime.now(),
-        ));
+        await createNotification(
+          NotificationModel(
+            id: '',
+            type: NotificationType.transactionUpdate,
+            title: 'Transaction Update',
+            message: message,
+            relatedId: transactionId,
+            relatedType: 'transaction',
+            userId: notifyUserId,
+            isRead: false,
+            createdAt: DateTime.now(),
+          ),
+        );
       }
     } catch (e) {
       throw Exception('Error updating transaction status: $e');
@@ -528,14 +532,6 @@ class FirebaseService {
       final data = transDoc.data()!;
       final targetUser = data['targetUser'] as String;
       final relatedName = data['relatedName'] as String? ?? 'Transaction';
-      final type = data['type'] as String;
-
-      String notifRelatedType = 'transaction';
-      if (type == 'job_application')
-        notifRelatedType = 'job';
-      else if (type == 'service_booking')
-        notifRelatedType = 'service';
-      else if (type == 'rental_request') notifRelatedType = 'rental';
 
       await _db.collection('barangay_transactions').doc(transactionId).update({
         'paymentStatus': 'Paid',
@@ -544,17 +540,19 @@ class FirebaseService {
       });
 
       // Notify Provider
-      await createNotification(NotificationModel(
-        id: '',
-        type: NotificationType.paymentReceived,
-        title: 'Payment Received',
-        message: 'Payment confirmed for $relatedName',
-        relatedId: data['relatedId'] as String?,
-        relatedType: notifRelatedType,
-        userId: targetUser,
-        isRead: false,
-        createdAt: DateTime.now(),
-      ));
+      await createNotification(
+        NotificationModel(
+          id: '',
+          type: NotificationType.paymentReceived,
+          title: 'Payment Received',
+          message: 'Payment confirmed for $relatedName',
+          relatedId: transactionId,
+          relatedType: 'transaction',
+          userId: targetUser,
+          isRead: false,
+          createdAt: DateTime.now(),
+        ),
+      );
     } catch (e) {
       throw Exception('Error confirming payment: $e');
     }
@@ -573,14 +571,6 @@ class FirebaseService {
       final data = transDoc.data()!;
       final initiatedBy = data['initiatedBy'] as String;
       final relatedName = data['relatedName'] as String? ?? 'Transaction';
-      final type = data['type'] as String;
-
-      String notifRelatedType = 'transaction';
-      if (type == 'job_application')
-        notifRelatedType = 'job';
-      else if (type == 'service_booking')
-        notifRelatedType = 'service';
-      else if (type == 'rental_request') notifRelatedType = 'rental';
 
       await _db.collection('barangay_transactions').doc(transactionId).update({
         'status': 'Completed',
@@ -589,17 +579,19 @@ class FirebaseService {
       });
 
       // Notify Client
-      await createNotification(NotificationModel(
-        id: '',
-        type: NotificationType.transactionUpdate,
-        title: 'Transaction Completed',
-        message: '$relatedName has been marked as completed',
-        relatedId: data['relatedId'] as String?,
-        relatedType: notifRelatedType,
-        userId: initiatedBy,
-        isRead: false,
-        createdAt: DateTime.now(),
-      ));
+      await createNotification(
+        NotificationModel(
+          id: '',
+          type: NotificationType.transactionUpdate,
+          title: 'Transaction Completed',
+          message: '$relatedName has been marked as completed',
+          relatedId: transactionId,
+          relatedType: 'transaction',
+          userId: initiatedBy,
+          isRead: false,
+          createdAt: DateTime.now(),
+        ),
+      );
     } catch (e) {
       throw Exception('Error completing transaction: $e');
     }
@@ -635,10 +627,10 @@ class FirebaseService {
         .orderBy('createdAt', descending: true)
         .snapshots()
         .map((snapshot) {
-      return snapshot.docs.map((doc) {
-        return FeedbackModel.fromMap(doc.data(), doc.id);
-      }).toList();
-    });
+          return snapshot.docs.map((doc) {
+            return FeedbackModel.fromMap(doc.data(), doc.id);
+          }).toList();
+        });
   }
 
   /// Calculate average rating for a user
@@ -702,7 +694,8 @@ class FirebaseService {
           .count()
           .get();
 
-      final totalTransactions = (initiatedTransactionsCount.count ?? 0) +
+      final totalTransactions =
+          (initiatedTransactionsCount.count ?? 0) +
           (targetTransactionsCount.count ?? 0);
 
       return {
@@ -734,8 +727,10 @@ class FirebaseService {
     DocumentSnapshot? lastDoc,
   }) async {
     try {
-      Query query =
-          _db.collection('barangay_users').orderBy('name').limit(limit);
+      Query query = _db
+          .collection('barangay_users')
+          .orderBy('name')
+          .limit(limit);
 
       if (lastDoc != null) {
         query = query.startAfterDocument(lastDoc);
@@ -779,10 +774,10 @@ class FirebaseService {
         .orderBy('createdAt', descending: true)
         .snapshots()
         .map((snapshot) {
-      return snapshot.docs.map((doc) {
-        return ReportModel.fromMap(doc.data(), doc.id);
-      }).toList();
-    });
+          return snapshot.docs.map((doc) {
+            return ReportModel.fromMap(doc.data(), doc.id);
+          }).toList();
+        });
   }
 
   /// Resolve a report
@@ -830,12 +825,18 @@ class FirebaseService {
     try {
       final usersCount = await _db.collection('barangay_users').count().get();
       final jobsCount = await _db.collection('barangay_jobs').count().get();
-      final servicesCount =
-          await _db.collection('barangay_services').count().get();
-      final rentalsCount =
-          await _db.collection('barangay_rentals').count().get();
-      final transactionsCount =
-          await _db.collection('barangay_transactions').count().get();
+      final servicesCount = await _db
+          .collection('barangay_services')
+          .count()
+          .get();
+      final rentalsCount = await _db
+          .collection('barangay_rentals')
+          .count()
+          .get();
+      final transactionsCount = await _db
+          .collection('barangay_transactions')
+          .count()
+          .get();
       final reportsCount = await _db
           .collection('barangay_reports')
           .where('status', isEqualTo: 'pending')
@@ -897,10 +898,10 @@ class FirebaseService {
         .limit(50)
         .snapshots()
         .map((snapshot) {
-      return snapshot.docs.map((doc) {
-        return NotificationModel.fromMap(doc.data(), doc.id);
-      }).toList();
-    });
+          return snapshot.docs.map((doc) {
+            return NotificationModel.fromMap(doc.data(), doc.id);
+          }).toList();
+        });
   }
 
   /// Mark a notification as read
@@ -1011,10 +1012,10 @@ class FirebaseService {
         .orderBy('createdAt', descending: true)
         .snapshots()
         .map((snapshot) {
-      return snapshot.docs.map((doc) {
-        return FavoriteModel.fromMap(doc.data(), doc.id);
-      }).toList();
-    });
+          return snapshot.docs.map((doc) {
+            return FavoriteModel.fromMap(doc.data(), doc.id);
+          }).toList();
+        });
   }
 
   /// Check if item is favorited by user
