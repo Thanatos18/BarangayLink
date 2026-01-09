@@ -208,7 +208,8 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
                 Container(
                   padding: const EdgeInsets.all(10),
                   decoration: BoxDecoration(
-                    color: _getTypeColor(notification.type).withOpacity(0.1),
+                    color:
+                        _getTypeColor(notification.type).withValues(alpha: 0.1),
                     borderRadius: BorderRadius.circular(8),
                   ),
                   child: Icon(
@@ -307,10 +308,13 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
       provider.markAsRead(notification.id);
     }
 
-    if (notification.relatedId == null || notification.relatedType == null)
+    if (notification.relatedId == null || notification.relatedType == null) {
       return;
+    }
 
     final String relatedId = notification.relatedId!;
+    final navigator = Navigator.of(context);
+    final scaffoldMessenger = ScaffoldMessenger.of(context);
 
     try {
       showDialog(
@@ -320,7 +324,6 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
       );
 
       Widget? destination;
-      bool notFound = false;
 
       switch (notification.relatedType) {
         case 'job':
@@ -330,8 +333,6 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
           ).fetchJobById(relatedId);
           if (job != null) {
             destination = JobDetailScreen(job: job);
-          } else {
-            notFound = true;
           }
           break;
 
@@ -342,8 +343,6 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
           ).fetchServiceById(relatedId);
           if (service != null) {
             destination = ServiceDetailScreen(service: service);
-          } else {
-            notFound = true;
           }
           break;
 
@@ -354,8 +353,6 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
           ).fetchRentalById(relatedId);
           if (rental != null) {
             destination = RentalDetailScreen(rental: rental);
-          } else {
-            notFound = true;
           }
           break;
 
@@ -366,33 +363,26 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
           ).getTransactionById(relatedId);
           if (transaction != null) {
             destination = TransactionDetailScreen(transaction: transaction);
-          } else {
-            notFound = true;
           }
           break;
       }
 
       if (destination != null) {
-        Navigator.of(context).pop(); // Close loading dialog
-        Navigator.push(
-          context,
+        navigator.pop(); // Close loading dialog
+        navigator.push(
           MaterialPageRoute(builder: (_) => destination!),
         );
-      } else if (notification.relatedType != 'transaction') {
-        Navigator.of(context).pop(); // Close loading dialog
-        ScaffoldMessenger.of(context).showSnackBar(
+      } else {
+        navigator.pop(); // Close loading dialog
+        scaffoldMessenger.showSnackBar(
           const SnackBar(
             content: Text('Item not found or no longer available'),
           ),
         );
-      } else {
-        Navigator.of(context).pop(); // Close loading dialog
       }
     } catch (e) {
-      Navigator.of(context).pop(); // Close loading dialog
-      ScaffoldMessenger.of(
-        context,
-      ).showSnackBar(SnackBar(content: Text('Error: $e')));
+      navigator.pop(); // Close loading dialog
+      scaffoldMessenger.showSnackBar(SnackBar(content: Text('Error: $e')));
     }
   }
 
